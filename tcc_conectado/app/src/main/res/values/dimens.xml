@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Medidas do dashboard. Estão em recurso (e não fixas no layout) porque a
+     pasta values-sw600dp sobrescreve estes valores em tablets, deixando os
+     gráficos maiores sem precisar de um layout separado. -->
+<resources>
+    <dimen name="dashboard_padding">24dp</dimen>
+    <dimen name="dashboard_grafico_alto">260dp</dimen>
+    <dimen name="dashboard_grafico_medio">220dp</dimen>
+    <dimen name="dashboard_card_raio">18dp</dimen>
+    <dimen name="dashboard_espaco_card">14dp</dimen>
+</resources>

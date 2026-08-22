@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/BackGround"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/txtTituloPrompt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Prompt para o aluno"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/btnSelecionado" />
+
+        <TextView
+            android:id="@+id/txtSubtituloPrompt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp"
+            android:textColor="@color/BordaButton"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Matéria -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MATÉRIA"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#999999"
+            android:letterSpacing="0.12"
+            android:layout_marginBottom="8dp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/containerMaterias"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
+        <!-- Dificuldade -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DIFICULDADE"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#999999"
+            android:letterSpacing="0.12"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <Button
+                android:id="@+id/btnFacilPrompt"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="😊 Fácil"
+                android:textSize="13sp"
+                android:textColor="#555555"
+                android:backgroundTint="#EEEEEE" />
+
+            <Button
+                android:id="@+id/btnMedioPrompt"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:text="🎯 Médio"
+                android:textSize="13sp"
+                android:textColor="#555555"
+                android:backgroundTint="#EEEEEE" />
+
+            <Button
+                android:id="@+id/btnDificilPrompt"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="🔥 Difícil"
+                android:textSize="13sp"
+                android:textColor="#555555"
+                android:backgroundTint="#EEEEEE" />
+
+        </LinearLayout>
+
+        <!-- Instrução do professor -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="O QUE A IA DEVE PRIORIZAR PARA ESSE ALUNO?"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="#999999"
+            android:letterSpacing="0.12"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ex: focar em frações, o aluno confunde numerador e denominador"
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etInstrucaoProfessor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minLines="3"
+                android:gravity="top"
+                android:inputType="textMultiLine|textCapSentences" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnGerarPreview"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="🔍 Pré-visualizar prompt"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#5C6BC0"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Preview -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardPreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#FFFFFF"
+            android:visibility="gone"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✨ Assim a IA vai entender:"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#5C6BC0"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/txtPreviewPrompt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="14sp"
+                    android:textColor="#333333"
+                    android:lineSpacingExtra="4dp" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <ProgressBar
+            android:id="@+id/progressBarEnviarPrompt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnEnviarPrompt"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="📨 Enviar para o aluno"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/btnSelecionado"
+            android:enabled="false"
+            android:alpha="0.5"
+            android:layout_marginBottom="24dp" />
+
+    </LinearLayout>
+
+</ScrollView>

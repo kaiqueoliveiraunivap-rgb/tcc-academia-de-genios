@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/BackGround">
+
+    <!-- Cabeçalho -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/dashboard_padding"
+        android:paddingEnd="@dimen/dashboard_padding"
+        android:paddingTop="@dimen/dashboard_padding"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtTituloDashboard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Desempenho das turmas"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/btnSelecionado" />
+
+            <TextView
+                android:id="@+id/txtSubtituloDashboard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Visão geral"
+                android:textSize="13sp"
+                android:textColor="@color/BordaButton"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSairDashboard"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Sair"
+            android:textSize="12sp"
+            android:textColor="@color/BordaButton"
+            android:backgroundTint="@color/ChipFundo"
+            android:minWidth="0dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            app:cornerRadius="8dp" />
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBarDashboard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="24dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/txtVazioDashboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Você ainda não tem turmas cadastradas."
+        android:textSize="15sp"
+        android:textColor="@color/BordaButton"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone" />
+
+    <ScrollView
+        android:id="@+id/scrollDashboard"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="24dp">
+
+            <!-- Indicadores gerais: duas linhas de dois cards com peso igual,
+                 então eles acompanham a largura da tela sem quebrar. -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="false"
+                android:layout_marginBottom="10dp">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    app:cardCornerRadius="@dimen/dashboard_card_raio"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/CardFundo">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="TURMAS"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.12"
+                            android:textColor="@color/LabelSecao" />
+
+                        <TextView
+                            android:id="@+id/txtKpiTurmas"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/btnSelecionado"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    app:cardCornerRadius="@dimen/dashboard_card_raio"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/CardFundo">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ALUNOS"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.12"
+                            android:textColor="@color/LabelSecao" />
+
+                        <TextView
+                            android:id="@+id/txtKpiAlunos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/btnSelecionado"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="false"
+                android:layout_marginBottom="18dp">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    app:cardCornerRadius="@dimen/dashboard_card_raio"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/CardFundo">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="MÉDIA GERAL"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.12"
+                            android:textColor="@color/LabelSecao" />
+
+                        <TextView
+                            android:id="@+id/txtKpiMedia"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0,0"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/Destaque"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    app:cardCornerRadius="@dimen/dashboard_card_raio"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/CardFundo">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="APROVAÇÃO"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.12"
+                            android:textColor="@color/LabelSecao" />
+
+                        <TextView
+                            android:id="@+id/txtKpiAprovacao"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0%"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/OptCerta"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+            <!-- Gráfico principal: comparação entre as turmas -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="@dimen/dashboard_card_raio"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/CardFundo"
+                android:layout_marginBottom="@dimen/dashboard_espaco_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Média por turma"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/btnSelecionado" />
+
+                    <TextView
+                        android:id="@+id/txtLegendaComparativo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Toque em uma barra para ver o valor exato."
+                        android:textSize="12sp"
+                        android:textColor="@color/TextoSecundario"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <com.github.mikephil.charting.charts.BarChart
+                        android:id="@+id/chartComparativo"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/dashboard_grafico_alto" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Evolução das médias -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="@dimen/dashboard_card_raio"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/CardFundo"
+                android:layout_marginBottom="@dimen/dashboard_espaco_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Evolução do desempenho"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/btnSelecionado" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Média de cada turma mês a mês (escala 0 a 10)."
+                        android:textSize="12sp"
+                        android:textColor="@color/TextoSecundario"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <com.github.mikephil.charting.charts.LineChart
+                        android:id="@+id/chartEvolucao"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/dashboard_grafico_medio" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Aprovação x abaixo da média -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="@dimen/dashboard_card_raio"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/CardFundo"
+                android:layout_marginBottom="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Aprovação por turma"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/btnSelecionado" />
+
+                    <TextView
+                        android:id="@+id/txtLegendaAprovacao"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Percentual de alunos na média e abaixo da média."
+                        android:textSize="12sp"
+                        android:textColor="@color/TextoSecundario"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <com.github.mikephil.charting.charts.BarChart
+                        android:id="@+id/chartAprovacao"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/dashboard_grafico_medio" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Ordenação -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ORDENAR POR"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:textColor="@color/LabelSecao"
+                android:layout_marginBottom="8dp" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:id="@+id/containerOrdenacao"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+
+            </HorizontalScrollView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TURMAS"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:textColor="@color/LabelSecao"
+                android:layout_marginBottom="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvTurmasDashboard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,11 @@
+# Modelo do local.properties. Copie para "local.properties" e preencha.
+# O arquivo real NÃO é versionado (está no .gitignore) porque guarda caminho
+# de máquina e a chave da API.
+
+# Caminho do Android SDK nesta máquina.
+sdk.dir=C\:\\Users\\SEU_USUARIO\\AppData\\Local\\Android\\Sdk
+
+# Chave da API Google Gemini, usada para gerar as questões do quiz.
+# Gere a sua em https://aistudio.google.com/apikey
+# Também pode ser fornecida pela variável de ambiente GEMINI_API_KEY.
+GEMINI_API_KEY=cole_sua_chave_aqui

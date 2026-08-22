@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FAFAFA"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Título -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="O que vamos estudar?"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#1A1A2E"
+                android:layout_marginTop="16dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Escolha a matéria e a dificuldade"
+                android:textSize="14sp"
+                android:textColor="#666680"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Label matéria -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MATÉRIA"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#999999"
+                android:letterSpacing="0.12"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Grid de matérias -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvMaterias"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Label dificuldade -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DIFICULDADE"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#999999"
+                android:letterSpacing="0.12"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Botões de dificuldade -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="28dp">
+
+                <Button
+                    android:id="@+id/btnFacil"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:text="😊 Fácil"
+                    android:textSize="13sp"
+                    android:textColor="#555555"
+                    android:backgroundTint="#EEEEEE"/>
+
+                <Button
+                    android:id="@+id/btnMedio"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:text="🎯 Médio"
+                    android:textSize="13sp"
+                    android:textColor="#555555"
+                    android:backgroundTint="#EEEEEE"/>
+
+                <Button
+                    android:id="@+id/btnDificil"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="🔥 Difícil"
+                    android:textSize="13sp"
+                    android:textColor="#555555"
+                    android:backgroundTint="#EEEEEE"/>
+
+            </LinearLayout>
+
+            <!-- Loading -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_marginBottom="8dp">
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"/>
+
+                <TextView
+                    android:id="@+id/tvCarregando"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✨ Gerando questões com IA..."
+                    android:textSize="14sp"
+                    android:textColor="#5C6BC0"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    android:layout_marginTop="8dp"/>
+
+            </LinearLayout>
+
+            <!-- Botão iniciar -->
+            <Button
+                android:id="@+id/btnIniciar"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Iniciar Quiz"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#5C6BC0"
+                android:enabled="false"
+                android:alpha="0.5"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

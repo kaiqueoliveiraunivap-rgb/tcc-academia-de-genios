@@ -1,0 +1,24 @@
+# ── Android / Gradle ────────────────────────────────────────────────────────
+*.iml
+.gradle/
+.kotlin/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Caminho do SDK e chave da API Gemini — específicos de cada máquina.
+local.properties
+
+# ── IDE ─────────────────────────────────────────────────────────────────────
+.idea/
+*.iws
+*.ipr
+
+# ── Sistema ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Backend PHP ─────────────────────────────────────────────────────────────
+*.log

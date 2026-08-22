@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Linha de aluno na análise detalhada. Mesmo card branco de cantos 16dp e a
+     mesma hierarquia de texto usada na lista de alunos de TurmaDesempenho. -->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@color/CardFundo">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false"
+        android:paddingStart="18dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtNomeAluno"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Aluno"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/TextoPrincipal" />
+
+            <TextView
+                android:id="@+id/txtDetalheAluno"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="13sp"
+                android:textColor="@color/TextoSecundario"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/txtMediaAluno"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0,0"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/Destaque"
+            android:layout_marginEnd="12dp" />
+
+        <Button
+            android:id="@+id/btnEditarNota"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Editar"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/Destaque"
+            android:minWidth="0dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            app:cornerRadius="8dp" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

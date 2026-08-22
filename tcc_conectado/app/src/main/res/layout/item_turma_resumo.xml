@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Card de uma turma na visão geral. Mantém o mesmo desenho dos cards que já
+     existiam em ProfessorActivity: fundo branco, cantos 18dp, título índigo,
+     texto de apoio cinza-azulado e a seta "›" à direita. -->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="@dimen/dashboard_card_raio"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@color/CardFundo"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <!-- Linha do título -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:baselineAligned="false">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/txtNomeTurma"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Turma"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/btnSelecionado" />
+
+                <TextView
+                    android:id="@+id/txtInfoTurma"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 alunos"
+                    android:textSize="13sp"
+                    android:textColor="@color/TextoSecundario"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/txtMediaTurma"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0,0"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/Destaque" />
+
+                <TextView
+                    android:id="@+id/txtVariacaoTurma"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="12sp"
+                    android:textColor="@color/TextoSecundario" />
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="›"
+                android:textSize="24sp"
+                android:textColor="@color/SetaCard"
+                android:gravity="center"
+                android:layout_marginStart="12dp" />
+
+        </LinearLayout>
+
+        <!-- Barra de aprovação: leitura rápida sem precisar do gráfico -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp"
+            android:background="@color/FundoBarra">
+
+            <View
+                android:id="@+id/barraAprovados"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@color/OptCerta" />
+
+            <View
+                android:id="@+id/barraAbaixo"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0"
+                android:background="@color/OptErrada" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/txtAprovacaoTurma"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="12sp"
+            android:textColor="@color/TextoSecundario"
+            android:layout_marginTop="6dp" />
+
+        <!-- Melhor e menor desempenho -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:baselineAligned="false"
+            android:layout_marginTop="12dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingEnd="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MELHOR DESEMPENHO"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.10"
+                    android:textColor="@color/LabelSecao" />
+
+                <TextView
+                    android:id="@+id/txtMelhorAluno"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textSize="13sp"
+                    android:maxLines="2"
+                    android:textColor="@color/OptCerta"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MENOR DESEMPENHO"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.10"
+                    android:textColor="@color/LabelSecao" />
+
+                <TextView
+                    android:id="@+id/txtMenorAluno"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textSize="13sp"
+                    android:maxLines="2"
+                    android:textColor="@color/OptErrada"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

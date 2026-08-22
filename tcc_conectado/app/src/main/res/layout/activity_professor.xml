@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/BackGround"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false">
+
+        <TextView
+            android:id="@+id/txtSaudacaoProfessor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Olá, Professor(a)"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/btnSelecionado" />
+
+        <Button
+            android:id="@+id/btnSairProfessor"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Sair"
+            android:textSize="12sp"
+            android:textColor="@color/BordaButton"
+            android:backgroundTint="@color/ChipFundo"
+            android:minWidth="0dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Suas turmas"
+        android:textSize="14sp"
+        android:textColor="@color/BordaButton"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnAbrirDashboard"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="📊 Desempenho das turmas"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="@color/Destaque"
+        android:layout_marginBottom="20dp" />
+
+    <ProgressBar
+        android:id="@+id/progressBarProfessor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/txtVazioProfessor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nenhuma turma cadastrada para você ainda."
+        android:textSize="15sp"
+        android:textColor="@color/BordaButton"
+        android:gravity="center"
+        android:layout_marginTop="32dp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvTurmas"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false" />
+
+</LinearLayout>
