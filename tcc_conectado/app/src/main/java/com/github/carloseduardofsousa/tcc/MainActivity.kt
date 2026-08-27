@@ -191,13 +191,16 @@ class   MainActivity : AppCompatActivity() {
             btnConfirmar.text = "ERROU! PROXIMA"
         }
 
-        val idQuestao = pergunta.id
-        val idAlt     = alternativaSelecionadaId
+        // As questões vêm da Gemini e não existem na tabela questao, então o
+        // servidor grava o enunciado. Antes o app mandava id_questao/id_alternativa,
+        // que o endpoint não lê: nenhuma resposta chegava a ser registrada.
+        val enunciado = pergunta.enunciado
+        val acertou   = if (altSelecionada.ehCorreta) "1" else "0"
         Thread {
             ApiClient.post("registrar_resposta.php", mapOf(
-                "id_aluno"       to idUsuario.toString(),
-                "id_questao"     to idQuestao.toString(),
-                "id_alternativa" to idAlt.toString()
+                "token"     to Sessao.token(this),
+                "enunciado" to enunciado,
+                "acertou"   to acertou
             ))
         }.start()
     }
@@ -216,8 +219,10 @@ class   MainActivity : AppCompatActivity() {
         val mesRef = java.text.SimpleDateFormat("yyyy-MM", java.util.Locale.getDefault()).format(java.util.Date())
 
         Thread {
+            // Quem pontua é o dono do token; o servidor ignora qualquer id_aluno
+            // enviado daqui, então mandá-lo seria informação que ele descarta.
             ApiClient.post("atualizar_ranking.php", mapOf(
-                "id_aluno"       to idUsuario.toString(),
+                "token"          to Sessao.token(this),
                 "id_turma"       to idTurma.toString(),
                 "pontos"         to acertos.toString(),
                 "mes_referencia" to mesRef

@@ -25,6 +25,23 @@ function responderErro($mensagem, $httpStatus = 400)
     responderJson(["status" => "erro", "mensagem" => $mensagem], $httpStatus);
 }
 
+/**
+ * Lê um inteiro do corpo da requisição, já validando a faixa.
+ * Devolve null quando o campo falta ou não é um inteiro aceitável.
+ *
+ * Lê de $_POST, e não por filter_input(INPUT_POST, ...): filter_input consulta
+ * a cópia que o PHP montou no início da requisição, que não existe fora de um
+ * acesso HTTP real. Manter tudo em $_POST deixa os endpoints testáveis pela
+ * linha de comando e alinhados com o resto do projeto, que já lê $_POST.
+ */
+function inteiroDoPost($campo, $min = 1, $max = PHP_INT_MAX)
+{
+    $valor = filter_var($_POST[$campo] ?? null, FILTER_VALIDATE_INT, [
+        'options' => ['min_range' => $min, 'max_range' => $max],
+    ]);
+    return $valor === false ? null : $valor;
+}
+
 /** Bloqueia qualquer verbo diferente de POST (evita chamada acidental por URL). */
 function exigirPost()
 {

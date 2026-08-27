@@ -1,23 +1,48 @@
 <?php
-include 'conexao.php';
+// Grava o resultado de um quiz no histórico do aluno.
+//
+// O id_aluno vinha do corpo da requisição e não havia login, então dava para
+// gravar histórico falso na conta de qualquer aluno. Agora o dono do histórico
+// é sempre o dono do token.
 
-if (isset($_POST['id_aluno']) && isset($_POST['materia']) && isset($_POST['acertos']) && isset($_POST['total_questoes'])) {
-    $id_aluno       = intval($_POST['id_aluno']);
-    $materia        = $_POST['materia'];
-    $acertos        = intval($_POST['acertos']);
-    $total_questoes = intval($_POST['total_questoes']);
+require_once 'auth.php';
 
-    $stmt = $conn->prepare("INSERT INTO historico_quiz (id_aluno, materia, acertos, total_questoes) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("isii", $id_aluno, $materia, $acertos, $total_questoes);
+// Mesmo teto usado em atualizar_ranking.php: o servidor não conhece o quiz
+// (as questões são geradas no aparelho), então limita o que aceita.
+const HISTORICO_TOTAL_MAXIMO = 100;
 
-    if ($stmt->execute()) {
-        echo json_encode(["status" => "sucesso", "id_historico" => $stmt->insert_id]);
-    } else {
-        echo json_encode(["status" => "erro", "mensagem" => $stmt->error]);
-    }
-    $stmt->close();
-} else {
-    echo json_encode(["status" => "erro", "mensagem" => "Dados incompletos"]);
+$aluno = exigirUsuarioLogado($conn);
+
+$materia       = trim($_POST['materia'] ?? '');
+$acertos       = inteiroDoPost('acertos', 0, HISTORICO_TOTAL_MAXIMO);
+$totalQuestoes = inteiroDoPost('total_questoes', 1, HISTORICO_TOTAL_MAXIMO);
+
+if ($materia === '' || mb_strlen($materia) > 100) {
+    responderErro("Informe a matéria do quiz.", 422);
 }
-$conn->close();
-?>
+if ($acertos === null) {
+    responderErro("Número de acertos inválido.", 422);
+}
+if ($totalQuestoes === null) {
+    responderErro("Total de questões inválido.", 422);
+}
+if ($acertos > $totalQuestoes) {
+    responderErro("Acertos não pode ser maior que o total de questões.", 422);
+}
+
+$stmt = $conn->prepare(
+    "INSERT INTO historico_quiz (id_aluno, materia, acertos, total_questoes)
+     VALUES (?, ?, ?, ?)"
+);
+$stmt->bind_param("isii", $aluno['id_usuario'], $materia, $acertos, $totalQuestoes);
+
+if (!$stmt->execute()) {
+    $stmt->close();
+    error_log("salvar_historico_quiz: falha ao gravar histórico do aluno " . $aluno['id_usuario']);
+    responderErro("Não foi possível salvar o histórico.", 500);
+}
+
+$idHistorico = $stmt->insert_id;
+$stmt->close();
+
+responderJson(["status" => "sucesso", "id_historico" => intval($idHistorico)], 201);

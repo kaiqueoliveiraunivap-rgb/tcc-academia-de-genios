@@ -1,20 +1,45 @@
 <?php
-include 'conexao.php';
+// Apaga uma turma do professor autenticado.
+//
+// Antes rodava sem login nenhum: qualquer requisição com um id_turma apagava a
+// turma correspondente, de qualquer professor.
 
-if (isset($_POST['id_turma'])) {
-    $id_turma = intval($_POST['id_turma']);
+require_once 'auth.php';
 
-    $stmt = $conn->prepare("DELETE FROM turma WHERE id_turma = ?");
-    $stmt->bind_param("i", $id_turma);
+$professor = exigirProfessor($conn);
 
-    if ($stmt->execute()) {
-        echo json_encode(["status" => "deletado"]);
-    } else {
-        echo json_encode(["status" => "erro", "mensagem" => $stmt->error]);
-    }
-    $stmt->close();
-} else {
-    echo json_encode(["status" => "erro", "mensagem" => "ID inválido"]);
+$idTurma = inteiroDoPost('id_turma');
+
+if ($idTurma === null) {
+    responderErro("Turma inválida.", 422);
 }
-$conn->close();
-?>
+
+exigirTurmaDoProfessor($conn, $idTurma, $professor['id_usuario']);
+
+// A turma é referenciada por matricula e ranking. Apagar direto quebraria a
+// FK e devolveria erro de banco; remover os dependentes primeiro, na mesma
+// transação, deixa o banco consistente se algo falhar no meio.
+$conn->begin_transaction();
+
+try {
+    foreach (["DELETE FROM ranking WHERE id_turma = ?",
+              "DELETE FROM matricula WHERE id_turma = ?"] as $sqlDependente) {
+        $stmt = $conn->prepare($sqlDependente);
+        $stmt->bind_param("i", $idTurma);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    $stmt = $conn->prepare("DELETE FROM turma WHERE id_turma = ? AND id_professor = ?");
+    $stmt->bind_param("ii", $idTurma, $professor['id_usuario']);
+    $stmt->execute();
+    $stmt->close();
+
+    $conn->commit();
+} catch (mysqli_sql_exception $e) {
+    $conn->rollback();
+    error_log("deletar_turma: falha ao apagar turma $idTurma: " . $e->getMessage());
+    responderErro("Não foi possível apagar a turma.", 500);
+}
+
+responderJson(["status" => "deletado"]);

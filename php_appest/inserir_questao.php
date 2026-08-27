@@ -1,24 +1,48 @@
 <?php
-include 'conexao.php';
+// Cadastra uma questão numa matéria.
+//
+// Além da falta de login, o INSERT usava a coluna "difficulty", que não existe
+// no schema (a coluna é "dificuldade"). Ou seja, este endpoint nunca chegou a
+// gravar nada: falhava em toda chamada.
 
-if (isset($_POST['enunciado']) && isset($_POST['dificuldade']) && isset($_POST['id_materia'])) {
-    $enunciado   = $_POST['enunciado'];
-    $dificuldade = $_POST['dificuldade'];
-    $id_materia  = intval($_POST['id_materia']);
+require_once 'auth.php';
 
-    $sql = "INSERT INTO questao (enunciado, difficulty, id_materia) VALUES (?, ?, ?)";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssi", $enunciado, $dificuldade, $id_materia);
+exigirProfessor($conn);
 
-    if ($stmt->execute()) {
-        echo json_encode(["status" => "sucesso", "id_questao" => $stmt->insert_id]);
-    } else {
-        echo json_encode(["status" => "erro", "mensagem" => $stmt->error]);
-    }
-    $stmt->close();
-} else {
-    echo json_encode(["status" => "erro", "mensagem" => "Dados incompletos"]);
+// Os mesmos valores usados na coluna dificuldade do schema.
+const DIFICULDADES_VALIDAS = ['FACIL', 'MEDIO', 'DIFICIL'];
+
+$enunciado   = trim($_POST['enunciado'] ?? '');
+$dificuldade = strtoupper(trim($_POST['dificuldade'] ?? ''));
+$idMateria   = inteiroDoPost('id_materia');
+
+if ($enunciado === '') {
+    responderErro("Informe o enunciado da questão.", 422);
 }
-$conn->close();
-?>
+if (!in_array($dificuldade, DIFICULDADES_VALIDAS, true)) {
+    responderErro("Dificuldade deve ser FACIL, MEDIO ou DIFICIL.", 422);
+}
+if ($idMateria === null) {
+    responderErro("Matéria inválida.", 422);
+}
+
+$stmt = $conn->prepare(
+    "INSERT INTO questao (enunciado, dificuldade, id_materia) VALUES (?, ?, ?)"
+);
+$stmt->bind_param("ssi", $enunciado, $dificuldade, $idMateria);
+
+try {
+    $stmt->execute();
+    $idQuestao = $stmt->insert_id;
+} catch (mysqli_sql_exception $e) {
+    $stmt->close();
+    // 1452 = FK violada, ou seja, a matéria informada não existe.
+    if ($e->getCode() === 1452) {
+        responderErro("Matéria não encontrada.", 422);
+    }
+    error_log("inserir_questao: " . $e->getMessage());
+    responderErro("Não foi possível cadastrar a questão.", 500);
+}
+$stmt->close();
+
+responderJson(["status" => "sucesso", "id_questao" => intval($idQuestao)], 201);

@@ -35,6 +35,7 @@ class RankingActivity : AppCompatActivity() {
 
         Thread {
             val resposta = ApiClient.post("listar_ranking.php", mapOf(
+                "token"          to Sessao.token(this),
                 "id_turma"       to idTurma.toString(),
                 "mes_referencia" to mesRef
             ))

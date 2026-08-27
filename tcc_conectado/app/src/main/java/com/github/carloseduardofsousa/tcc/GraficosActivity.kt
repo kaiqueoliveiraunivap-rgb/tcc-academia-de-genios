@@ -37,7 +37,9 @@ class GraficosActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
 
         Thread {
-            val resposta = ApiClient.post("listar_historico.php", mapOf("id_aluno" to idUsuario.toString()))
+            // O histórico devolvido é o do dono do token; o servidor não lê
+            // id_aluno da requisição.
+            val resposta = ApiClient.post("listar_historico.php", mapOf("token" to Sessao.token(this)))
 
             runOnUiThread {
                 progressBar.visibility = View.GONE

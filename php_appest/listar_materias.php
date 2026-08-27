@@ -1,20 +1,24 @@
 <?php
-include 'conexao.php';
+// Lista as matérias do catálogo.
+//
+// O arquivo estava com o corpo errado: apesar do nome, ele fazia um INSERT em
+// materia (cópia de inserir_materia.php). Quem chamasse "listar" criava uma
+// matéria nova. Agora faz o que o nome diz.
+//
+// Exige login, mas de qualquer perfil: o aluno precisa da lista para escolher
+// a matéria do quiz.
 
-if (isset($_POST['nome'])) {
-    $nome = $_POST['nome'];
+require_once 'auth.php';
 
-    $stmt = $conn->prepare("INSERT INTO materia (nome) VALUES (?)");
-    $stmt->bind_param("s", $nome);
+exigirUsuarioLogado($conn);
 
-    if ($stmt->execute()) {
-        echo json_encode(["status" => "sucesso", "id_materia" => $stmt->insert_id]);
-    } else {
-        echo json_encode(["status" => "erro", "mensagem" => $stmt->error]);
-    }
-    $stmt->close();
-} else {
-    echo json_encode(["status" => "erro", "mensagem" => "Nome não enviado"]);
+$result = $conn->query("SELECT id_materia, nome FROM materia ORDER BY nome ASC");
+
+$dados = [];
+while ($row = $result->fetch_assoc()) {
+    $row['id_materia'] = intval($row['id_materia']);
+    $dados[] = $row;
 }
-$conn->close();
-?>
+$result->free();
+
+responderJson($dados);

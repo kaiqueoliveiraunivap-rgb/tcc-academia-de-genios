@@ -1,24 +1,36 @@
 <?php
-include 'conexao.php';
+// Cria uma turma para o professor autenticado.
+//
+// O id_professor deixa de vir do corpo da requisição: a turma é sempre criada
+// para o dono do token. Antes, qualquer um (sem login) podia criar turma em
+// nome de qualquer professor.
 
-if (isset($_POST['nome_turma']) && isset($_POST['ano_letivo']) && isset($_POST['id_professor'])) {
-    $nome_turma   = $_POST['nome_turma'];
-    $ano_letivo   = $_POST['ano_letivo'];
-    $id_professor = intval($_POST['id_professor']);
+require_once 'auth.php';
 
-    $sql = "INSERT INTO turma (nome_turma, ano_letivo, id_professor) VALUES (?, ?, ?)";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssi", $nome_turma, $ano_letivo, $id_professor);
+$professor = exigirProfessor($conn);
 
-    if ($stmt->execute()) {
-        echo json_encode(["status" => "sucesso", "id_turma" => $stmt->insert_id]);
-    } else {
-        echo json_encode(["status" => "erro", "mensagem" => $stmt->error]);
-    }
-    $stmt->close();
-} else {
-    echo json_encode(["status" => "erro", "mensagem" => "Dados incompletos"]);
+$nomeTurma = trim($_POST['nome_turma'] ?? '');
+$anoLetivo = trim($_POST['ano_letivo'] ?? '');
+
+if ($nomeTurma === '' || mb_strlen($nomeTurma) > 80) {
+    responderErro("Informe um nome de turma com até 80 caracteres.", 422);
 }
-$conn->close();
-?>
+if (!preg_match('/^\d{4}$/', $anoLetivo)) {
+    responderErro("Ano letivo inválido.", 422);
+}
+
+$stmt = $conn->prepare(
+    "INSERT INTO turma (nome_turma, ano_letivo, id_professor) VALUES (?, ?, ?)"
+);
+$stmt->bind_param("ssi", $nomeTurma, $anoLetivo, $professor['id_usuario']);
+
+if (!$stmt->execute()) {
+    $stmt->close();
+    error_log("inserir_turma: falha ao criar turma do professor " . $professor['id_usuario']);
+    responderErro("Não foi possível criar a turma.", 500);
+}
+
+$idTurma = $stmt->insert_id;
+$stmt->close();
+
+responderJson(["status" => "sucesso", "id_turma" => intval($idTurma)], 201);

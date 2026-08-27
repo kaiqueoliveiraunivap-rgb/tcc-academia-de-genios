@@ -1,18 +1,31 @@
 <?php
-include 'conexao.php';
+// Lista as turmas do professor autenticado.
+//
+// Antes devolvia TODAS as turmas da escola, com o nome do professor de cada
+// uma, para quem chamasse — sem login. Agora o professor vê só as suas.
+//
+// Para o dashboard, prefira listar_turmas_professor.php, que já traz os
+// contadores de aluno. Este endpoint devolve só o essencial.
 
-$sql    = "SELECT t.id_turma, t.nome_turma, t.ano_letivo, u.nome AS nome_professor
-           FROM turma t
-           JOIN usuario u ON t.id_professor = u.id_usuario";
-$result = $conn->query($sql);
-$dados  = [];
+require_once 'auth.php';
 
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $dados[] = $row;
-    }
+$professor = exigirProfessor($conn);
+
+$stmt = $conn->prepare(
+    "SELECT id_turma, nome_turma, ano_letivo
+     FROM turma
+     WHERE id_professor = ?
+     ORDER BY ano_letivo DESC, nome_turma ASC"
+);
+$stmt->bind_param("i", $professor['id_usuario']);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$dados = [];
+while ($row = $result->fetch_assoc()) {
+    $row['id_turma'] = intval($row['id_turma']);
+    $dados[] = $row;
 }
+$stmt->close();
 
-echo json_encode($dados);
-$conn->close();
-?>
+responderJson($dados);

@@ -1,20 +1,40 @@
 <?php
-include 'conexao.php';
+// Remove a matrícula de um aluno numa turma do professor autenticado.
+//
+// Rodava sem login: qualquer requisição com um id_matricula desmatriculava o
+// aluno correspondente, em qualquer turma.
 
-if (isset($_POST['id_matricula'])) {
-    $id_matricula = intval($_POST['id_matricula']);
+require_once 'auth.php';
 
-    $stmt = $conn->prepare("DELETE FROM matricula WHERE id_matricula = ?");
-    $stmt->bind_param("i", $id_matricula);
+$professor = exigirProfessor($conn);
 
-    if ($stmt->execute()) {
-        echo json_encode(["status" => "deletado"]);
-    } else {
-        echo json_encode(["status" => "erro", "mensagem" => $stmt->error]);
-    }
-    $stmt->close();
-} else {
-    echo json_encode(["status" => "erro", "mensagem" => "ID inválido"]);
+$idMatricula = inteiroDoPost('id_matricula');
+
+if ($idMatricula === null) {
+    responderErro("Matrícula inválida.", 422);
 }
-$conn->close();
-?>
+
+// O DELETE já filtra pelo professor pelo JOIN com turma, então uma matrícula
+// de outro professor simplesmente não é encontrada.
+$stmt = $conn->prepare(
+    "DELETE m FROM matricula m
+     JOIN turma t ON t.id_turma = m.id_turma
+     WHERE m.id_matricula = ? AND t.id_professor = ?"
+);
+$stmt->bind_param("ii", $idMatricula, $professor['id_usuario']);
+
+try {
+    $stmt->execute();
+    $apagou = $stmt->affected_rows === 1;
+} catch (mysqli_sql_exception $e) {
+    $stmt->close();
+    error_log("deletar_matricula: " . $e->getMessage());
+    responderErro("Não foi possível remover a matrícula.", 500);
+}
+$stmt->close();
+
+if (!$apagou) {
+    responderErro("Matrícula não encontrada para este professor.", 403);
+}
+
+responderJson(["status" => "deletado"]);

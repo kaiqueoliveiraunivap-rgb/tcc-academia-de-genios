@@ -1,24 +1,32 @@
 <?php
-include 'conexao.php';
+// Histórico de quizzes do aluno autenticado.
+//
+// O id_aluno vinha do corpo da requisição e não havia login: trocar o número
+// devolvia o histórico de desempenho de outro aluno. Agora o histórico é
+// sempre o de quem está logado.
 
-if (isset($_POST['id_aluno'])) {
-    $id_aluno = intval($_POST['id_aluno']);
+require_once 'auth.php';
 
-    // Busca os quizzes do mais recente para o mais antigo
-    $stmt = $conn->prepare("SELECT materia, acertos, total_questoes, DATE_FORMAT(data_realizacao, '%d/%m') as data_formatada FROM historico_quiz WHERE id_aluno = ? ORDER BY id_historico ASC");
-    $stmt->bind_param("i", $id_aluno);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $dados = [];
-    while ($row = $result->fetch_assoc()) {
-        $dados[] = $row;
-    }
+$aluno = exigirUsuarioLogado($conn);
 
-    echo json_encode($dados);
-    $stmt->close();
-} else {
-    echo json_encode(["status" => "erro", "mensagem" => "ID do aluno nao fornecido"]);
+// Ordem cronológica: o gráfico de evolução do app depende disso.
+$stmt = $conn->prepare(
+    "SELECT materia, acertos, total_questoes,
+            DATE_FORMAT(data_realizacao, '%d/%m') AS data_formatada
+     FROM historico_quiz
+     WHERE id_aluno = ?
+     ORDER BY id_historico ASC"
+);
+$stmt->bind_param("i", $aluno['id_usuario']);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$dados = [];
+while ($row = $result->fetch_assoc()) {
+    $row['acertos']        = intval($row['acertos']);
+    $row['total_questoes'] = intval($row['total_questoes']);
+    $dados[] = $row;
 }
-$conn->close();
-?>
+$stmt->close();
+
+responderJson($dados);

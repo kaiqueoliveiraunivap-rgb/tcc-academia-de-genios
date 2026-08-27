@@ -4,6 +4,10 @@
 // já existiam na resposta foram mantidos para não quebrar as telas antigas.
 require_once 'auth.php';
 
+// Só POST: impede que a senha chegue por querystring e acabe registrada no log
+// de acesso do servidor.
+exigirPost();
+
 if (isset($_POST['email']) && isset($_POST['senha'])) {
     $email = $_POST['email'];
     $senha = $_POST['senha'];

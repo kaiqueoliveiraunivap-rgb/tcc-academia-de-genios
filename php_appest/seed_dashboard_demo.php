@@ -4,7 +4,11 @@
 //
 // Como rodar (uma vez):
 //     php seed_dashboard_demo.php
-//   ou abrindo http://localhost/php_appest/seed_dashboard_demo.php
+//
+// Roda SÓ pela linha de comando. Antes também respondia por HTTP, e como ele
+// cria uma conta de professor com senha fixa e ainda imprime o login e a senha
+// na resposta, bastava abrir a URL num servidor publicado para receber um
+// acesso pronto ao dashboard de notas da escola.
 //
 // É idempotente: rodar de novo não duplica nada. Só insere o que ainda não
 // existe e reaproveita os registros já criados (procurando por e-mail e por
@@ -14,6 +18,11 @@
 // usa em produção (avaliacao/nota). Quando as notas reais começarem a ser
 // lançadas, o dashboard passa a mostrá-las sem nenhuma alteração de código —
 // basta não rodar este script.
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
 
 require_once 'conexao.php';
 

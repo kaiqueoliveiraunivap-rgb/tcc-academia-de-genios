@@ -1,29 +1,35 @@
 <?php
-include 'conexao.php';
+// Lista as questões de uma matéria.
+//
+// A consulta já era preparada; o que faltava era login. Sem isso o banco de
+// questões da escola ficava aberto para qualquer um baixar.
 
-if (isset($_POST['id_materia'])) {
-    $id_materia = intval($_POST['id_materia']);
+require_once 'auth.php';
 
-    $sql = "SELECT q.id_questao, q.enunciado, q.dificuldade, m.nome AS materia
-            FROM questao q
-            JOIN materia m ON q.id_materia = m.id_materia
-            WHERE q.id_materia = ?";
+exigirProfessor($conn);
 
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $id_materia);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $dados = [];
-    while ($row = $result->fetch_assoc()) {
-        $row['id_questao'] = intval($row['id_questao']);
-        $dados[] = $row;
-    }
+$idMateria = inteiroDoPost('id_materia');
 
-    echo json_encode($dados);
-    $stmt->close();
-} else {
-    echo json_encode(["status" => "erro", "mensagem" => "Matéria inválida"]);
+if ($idMateria === null) {
+    responderErro("Matéria inválida.", 422);
 }
-$conn->close();
-?>
+
+$stmt = $conn->prepare(
+    "SELECT q.id_questao, q.enunciado, q.dificuldade, m.nome AS materia
+     FROM questao q
+     JOIN materia m ON q.id_materia = m.id_materia
+     WHERE q.id_materia = ?
+     ORDER BY q.id_questao ASC"
+);
+$stmt->bind_param("i", $idMateria);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$dados = [];
+while ($row = $result->fetch_assoc()) {
+    $row['id_questao'] = intval($row['id_questao']);
+    $dados[] = $row;
+}
+$stmt->close();
+
+responderJson($dados);
