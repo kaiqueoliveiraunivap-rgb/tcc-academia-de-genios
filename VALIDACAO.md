@@ -1,8 +1,10 @@
-# Validação local — 29/09/2026
+# Validação local — 04/10/2026
 
 O app Android, a API e o painel da coordenação continuam usando o mesmo banco `appest`. As migrações são incrementais, sem substituir os cadastros existentes.
 
 ## Testes executados
+
+- Auditoria de otimização: `php -l` aprovado nos 77 arquivos PHP; `estudo_validacao_test.php` e `estudo_formato_test.php` aprovados após a compactação do prompt, alteração do retry e das métricas seguras de geração.
 
 - Validação de questões e formatação das explicações: scripts `estudo_validacao_test.php` e `estudo_formato_test.php` aprovados.
 - Integração de aluno/professor: `estudo_turma_test.php` aprovado em banco temporário. Cobre orientação para toda a turma, nível médio, permissões, histórico, revisão, progresso, conclusão sem duplicar pontos, ranking e gráficos individuais/agregados.

@@ -1,5 +1,6 @@
 package com.github.carloseduardofsousa.tcc
 
+import android.util.Log
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -32,9 +33,10 @@ object ApiClient {
      * mesma mensagem genérica de falha de conexão.
      */
     fun postComStatus(endpoint: String, params: Map<String, String>, timeoutMs: Int = 8000): ApiResposta {
+        var conexao: HttpURLConnection? = null
         return try {
             val url = URL(ApiConfig.BASE_URL + endpoint)
-            val conn = url.openConnection() as HttpURLConnection
+            val conn = (url.openConnection() as HttpURLConnection).also { conexao = it }
             conn.requestMethod = "POST"
             conn.doOutput = true
             conn.connectTimeout = 8000
@@ -57,8 +59,11 @@ object ApiClient {
 
             ApiResposta(codigo, corpo)
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Sem corpo ou dados de sessão no log; a tela decide a mensagem ao usuário.
+            Log.w("ApiClient", "Falha de rede em $endpoint: ${e.javaClass.simpleName}")
             ApiResposta(0, null)
+        } finally {
+            conexao?.disconnect()
         }
     }
 }

@@ -37,7 +37,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Mantém o XAMPP/10.0.2.2 acessível apenas no desenvolvimento local.
+            manifestPlaceholders["cleartextTraffic"] = "true"
+        }
         release {
+            // A URL de produção deve ser HTTPS; o APK de release não aceita HTTP.
+            manifestPlaceholders["cleartextTraffic"] = "false"
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

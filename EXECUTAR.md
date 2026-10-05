@@ -33,6 +33,7 @@ Nesta instalação local, os 30 PDFs do Drive já foram importados: 70 frentes e
 - O banco `appest` existente é preservado. Em uma máquina nova, o instalador o cria automaticamente.
 - O Apache e o conteúdo antigo em `C:\xampp\htdocs\php_appest` não foram alterados. O app usa a API nova na porta 8088.
 - Para outra API: configure `API_BASE_URL` no `tcc_conectado/local.properties`.
+- O `debug` aceita HTTP para o XAMPP local. O `release` bloqueia tráfego HTTP: para publicar, defina `API_BASE_URL` com HTTPS antes de gerar o APK/AAB.
 - O build debug com a URL local prepara a API automaticamente. Para iniciar sem compilar, execute `iniciar-local.ps1` ou rode a tarefa Gradle `prepararAmbienteLocal`.
 - Para hospedar a API e o banco sem XAMPP, siga `HOSPEDAGEM.md`.
 - Em CI: use `-PskipLocalApi=true` para compilar sem iniciar serviços. O início automático é somente do build debug com a URL local no Windows.
@@ -49,3 +50,5 @@ C:\xampp\php\php.exe php_appest\tests\estudo_validacao_test.php
 O teste de login da API verifica os três perfis do banco, seis combinações incorretas, senha inválida, ausência de perfil, autorização da coordenação e aluno com várias matrículas. O Android disponibiliza apenas aluno e professor. O teste usa somente as contas de teste geradas pelo instalador, encerra os tokens e remove a turma temporária ao terminar.
 
 Os testes locais desta cópia estão descritos em `VALIDACAO.md`. Em outra máquina, a chave Gemini deve ser configurada fora da pasta pública; a disponibilidade do provedor depende da rede e da cota da conta.
+
+O arquivo de sessão Android (`sessao_appest.xml`) é excluído do backup em nuvem e da transferência de aparelho. O usuário precisará entrar novamente após restaurar o aplicativo, em vez de recuperar um token de sessão.

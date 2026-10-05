@@ -11,6 +11,24 @@ $nivel = 'MEDIO';
 if (!$id) responderErro('Capítulo inválido.');
 $idTurma=turmaDoEstudo($conn,$aluno['id_usuario'],inteiroDoPost('id_turma'));
 $lock = false;
+$inicioRequisicao=microtime(true);
+$origemGeracao='cache';
+
+function registrarMetricasGeracaoEstudo(array $dados): void {
+    // Não registra capítulo, token de sessão, chave ou conteúdo didático.
+    if (configuracao('APP_ENV','development')==='production') return;
+    error_log('[gerar_estudo] '.json_encode($dados,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+}
+
+function motivoSeguroRetryEstudo(Throwable $erro): string {
+    $mensagem=$erro->getMessage();
+    if (str_contains($mensagem,'Referência não encontrada')) return 'referencia_invalida';
+    if (str_contains($mensagem,'Explicação pouco desenvolvida')) return 'explicacao_curta';
+    if (str_contains($mensagem,'Questão')) return 'questao_invalida';
+    if (str_contains($mensagem,'Geração incompleta')) return 'geracao_incompleta';
+    if ($erro instanceof JsonException) return 'json_invalido';
+    return 'falha_'.(new ReflectionClass($erro))->getShortName();
+}
 try {
     $stmt=$conn->prepare('SELECT c.*, l.titulo AS livro, l.materia, l.fonte_url FROM capitulo_livro c JOIN livro_didatico l ON l.id_livro=c.id_livro WHERE c.id_capitulo=? AND c.revisado=1 AND l.ativo=1');
     $stmt->bind_param('i',$id); $stmt->execute();
@@ -41,8 +59,12 @@ try {
         $s->bind_param('iss',$id,$nivel,$versao); $s->execute(); $cache=$s->get_result()->fetch_assoc();
         if (!$cache && microtime(true)-$inicioEspera>5) throw new RuntimeException('A geração simultânea não produziu um estudo válido.');
     }
-    if ($cache) { $idEstudo=(int)$cache['id_estudo']; $dados=json_decode($cache['conteudo_json'],true,512,JSON_THROW_ON_ERROR); }
+    if ($cache) {
+        $idEstudo=(int)$cache['id_estudo'];
+        $dados=json_decode($cache['conteudo_json'],true,512,JSON_THROW_ON_ERROR);
+    }
     else {
+        $origemGeracao='nova';
         $key=configuracao('GEMINI_API_KEY');
         if (!$key) throw new RuntimeException('Chave da IA não configurada no servidor.');
         $fontesPreparadas=prepararFontesEstudo($paginas);
@@ -58,20 +80,21 @@ try {
         $instrucao=instrucaoEstudoCompleto().' Para este capítulo, organize a explicação em 8 blocos. Escreva de '.$porBloco.' a '.($porBloco+40).' palavras no campo texto de cada bloco, além dos tópicos. O conjunto precisa de no mínimo '.$minimo.' palavras, mantendo cada parágrafo fundamentado no trecho escolhido. Confira esses limites antes de concluir o JSON; não envie uma síntese curta.';
         $entrada='Matéria: '.$cap['materia']."\nCapítulo selecionado: ".$cap['titulo']."\nTexto completo do capítulo em trechos:\n".json_encode($fontesPreparadas,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
         if ($orientacao) $entrada.="\n\nOrientação de foco do professor, válida apenas quando este capítulo sustentar o assunto: ".mb_substr($orientacao['prompt_final'],0,4000);
-        $body=['systemInstruction'=>['parts'=>[['text'=>$instrucao]]],'contents'=>[['role'=>'user','parts'=>[['text'=>$entrada]]]],'generationConfig'=>['temperature'=>0.2,'maxOutputTokens'=>10000,'responseMimeType'=>'application/json','responseSchema'=>$schema]];
+        $body=['systemInstruction'=>['parts'=>[['text'=>$instrucao]]],'contents'=>[['role'=>'user','parts'=>[['text'=>$entrada]]]],'generationConfig'=>['temperature'=>0.2,'maxOutputTokens'=>5000,'responseMimeType'=>'application/json','responseSchema'=>$schema]];
         $falha=null;
-        $ultimaResposta=null;
+        $tentativas=0;
+        $usoGemini=[];
+        $motivoRetry=null;
         for ($tentativa=0; $tentativa<2; $tentativa++) {
+            $tentativas++;
             if ($tentativa>0) usleep(800000);
-            if ($tentativa>0 && $ultimaResposta!==null) {
-                // Corrige a resposta recebida com o motivo concreto da rejeição.
-                // Mantém o capítulo original e as mesmas regras de fonte e qualidade.
-                $body['contents'][]=['role'=>'model','parts'=>[['text'=>$ultimaResposta]]];
-                $body['contents'][]=['role'=>'user','parts'=>[['text'=>'A validação detectou: '.$falha->getMessage().' Corrija e devolva o JSON completo. Desenvolva 8 blocos com pelo menos '.$porBloco.' palavras em cada texto, usando somente os trechos fornecidos. Preserve as questões válidas, as referências existentes e inclua tópicos e palavras-chave. Não preencha o tamanho com repetições.']]];
-            }
+            // O retry reenvia apenas a fonte original e a causa curta. Incluir a
+            // resposta inválida anterior dobrava o input e não ajudava a validá-la.
+            $corpoTentativa=$body;
+            if ($tentativa>0) $corpoTentativa['contents'][0]['parts'][0]['text']=$entrada."\n\nCorreção obrigatória: ".mb_substr($falha->getMessage(),0,280)." Retorne o JSON completo, com 8 blocos de ao menos {$porBloco} palavras e todas as regras acima.";
             try {
                 $ch=curl_init('https://generativelanguage.googleapis.com/v1beta/models/'.$model.':generateContent');
-                curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>10,CURLOPT_TIMEOUT=>45,CURLOPT_HTTPHEADER=>['Content-Type: application/json','x-goog-api-key: '.$key],CURLOPT_POSTFIELDS=>json_encode($body,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)]);
+                curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>10,CURLOPT_TIMEOUT=>45,CURLOPT_HTTPHEADER=>['Content-Type: application/json','x-goog-api-key: '.$key],CURLOPT_POSTFIELDS=>json_encode($corpoTentativa,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)]);
                 $raw=curl_exec($ch); $http=curl_getinfo($ch,CURLINFO_HTTP_CODE); $curlError=curl_error($ch); curl_close($ch);
                 if ($http!==200 || !$raw) {
                     $provider=json_decode($raw ?: '{}',true);
@@ -85,12 +108,13 @@ try {
                 $candidate=$res['candidates'][0] ?? [];
                 if (($candidate['finishReason'] ?? '')!=='STOP') throw new RuntimeException('Geração incompleta.');
                 $text=''; foreach ($candidate['content']['parts'] ?? [] as $part) if (empty($part['thought'])) $text.=$part['text'] ?? '';
-                $ultimaResposta=$text;
+                $usoGemini=$res['usageMetadata'] ?? [];
                 $dados=validarEstudoCompleto(resolverReferenciasEstudo(json_decode($text,true,512,JSON_THROW_ON_ERROR),$fontesPreparadas),$paginas);
                 $falha=null;
                 break;
             } catch (Throwable $e) {
                 $falha=$e;
+                $motivoRetry=motivoSeguroRetryEstudo($e);
                 if (isset($http) && $http>=400 && $http<500 && $http!==429) break;
             }
         }
@@ -100,8 +124,10 @@ try {
         $s=$conn->prepare('INSERT INTO estudo_gerado (id_capitulo,dificuldade,versao_gerador,conteudo_json,id_turma_destinataria) VALUES (?,?,?,?,?)');
         $s->bind_param('isssi',$id,$nivel,$versao,$json,$turmaDestinataria); $s->execute();
         $idEstudo=(int)$conn->insert_id;
+        registrarMetricasGeracaoEstudo(['origem'=>$origemGeracao,'duracao_ms'=>(int)((microtime(true)-$inicioRequisicao)*1000),'entrada_caracteres'=>mb_strlen($entrada),'saida_caracteres'=>mb_strlen($json),'modelo'=>$model,'tentativas'=>$tentativas,'retry'=>$tentativas>1,'motivo_retry'=>$tentativas>1 ? $motivoRetry : null,'uso'=>$usoGemini]);
     }
     validarEstudoCompleto($dados,$paginas);
+    if ($origemGeracao==='cache') registrarMetricasGeracaoEstudo(['origem'=>'cache','duracao_ms'=>(int)((microtime(true)-$inicioRequisicao)*1000),'modelo'=>$model]);
     $resposta=['status'=>'sucesso','id_estudo'=>$idEstudo,'id_turma'=>$idTurma,'dificuldade'=>$nivel,'estudo'=>$dados,'livro'=>$cap['livro'],'capitulo'=>$cap['titulo'],'fonte_url'=>$cap['fonte_url']];
 } catch (Throwable $e) {
     error_log('Falha estudo: '.get_class($e).' — '.$e->getMessage());

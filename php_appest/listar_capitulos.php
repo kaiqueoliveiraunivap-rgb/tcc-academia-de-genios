@@ -4,7 +4,9 @@ $usuario=exigirUsuarioLogado($conn);
 $idFrente=filter_var($_POST['id_frente'] ?? null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
 if (!$idFrente) responderErro('Frente inválida.',422);
 try {
-    $stmt = $conn->prepare('SELECT c.id_capitulo,c.titulo,c.ordem,l.titulo AS livro,l.materia,l.fonte_url,f.titulo AS frente FROM capitulo_livro c JOIN frente_livro f ON f.id_frente=c.id_frente JOIN livro_didatico l ON l.id_livro=c.id_livro WHERE l.ativo=1 AND c.revisado=1 AND f.id_frente=? ORDER BY c.ordem');
+    // A tela usa apenas identificação e progresso; não transfira metadados do
+    // livro nem o texto do capítulo a cada abertura da frente.
+    $stmt = $conn->prepare('SELECT c.id_capitulo,c.titulo,c.ordem FROM capitulo_livro c JOIN livro_didatico l ON l.id_livro=c.id_livro WHERE l.ativo=1 AND c.revisado=1 AND c.id_frente=? ORDER BY c.ordem');
     $stmt->bind_param('i',$idFrente);
     $stmt->execute();
     $capitulos=$stmt->get_result()->fetch_all(MYSQLI_ASSOC);

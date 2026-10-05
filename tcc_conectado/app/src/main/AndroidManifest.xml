@@ -12,7 +12,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:usesCleartextTraffic="true"
+        android:usesCleartextTraffic="${cleartextTraffic}"
         android:theme="@style/Theme.Tcc">
 
         <!-- O app passa a abrir pelo login. Antes o LAUNCHER estava na

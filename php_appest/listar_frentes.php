@@ -4,7 +4,8 @@ $usuario=exigirUsuarioLogado($conn);
 $materia=trim((string)($_POST['materia'] ?? ''));
 if ($materia==='' || mb_strlen($materia)>80) responderErro('Matéria inválida.',422);
 try {
-    $s=$conn->prepare("SELECT f.id_frente,f.titulo,f.ordem,l.titulo AS livro,l.fonte_url,
+    // fonte_url é necessário somente ao abrir o estudo, não na lista.
+    $s=$conn->prepare("SELECT f.id_frente,f.titulo,f.ordem,l.titulo AS livro,
       COUNT(c.id_capitulo) AS total_capitulos
       FROM frente_livro f
       JOIN livro_didatico l ON l.id_livro=f.id_livro
