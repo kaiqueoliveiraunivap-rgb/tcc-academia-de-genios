@@ -88,6 +88,7 @@ class TurmaAnaliseActivity : AppCompatActivity() {
         }
 
         setContentView(R.layout.activity_turma_analise)
+        NavegacaoUi.adicionarVoltar(this)
         repositorio = DashboardRepository(this)
 
         idTurma = intent.getIntExtra(EXTRA_ID_TURMA, 0)

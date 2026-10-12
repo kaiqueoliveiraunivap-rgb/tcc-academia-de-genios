@@ -9,18 +9,12 @@ require_once 'auth.php';
 
 exigirProfessor($conn);
 
-// Os mesmos valores usados na coluna dificuldade do schema.
-const DIFICULDADES_VALIDAS = ['FACIL', 'MEDIO', 'DIFICIL'];
-
 $enunciado   = trim($_POST['enunciado'] ?? '');
-$dificuldade = strtoupper(trim($_POST['dificuldade'] ?? ''));
+$dificuldade = 'MEDIO';
 $idMateria   = inteiroDoPost('id_materia');
 
 if ($enunciado === '') {
     responderErro("Informe o enunciado da questão.", 422);
-}
-if (!in_array($dificuldade, DIFICULDADES_VALIDAS, true)) {
-    responderErro("Dificuldade deve ser FACIL, MEDIO ou DIFICIL.", 422);
 }
 if ($idMateria === null) {
     responderErro("Matéria inválida.", 422);

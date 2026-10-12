@@ -71,6 +71,7 @@ class DashboardTurmasActivity : AppCompatActivity() {
         }
 
         setContentView(R.layout.activity_dashboard_turmas)
+        NavegacaoUi.adicionarVoltar(this)
         repositorio = DashboardRepository(this)
 
         progressBar           = findViewById(R.id.progressBarDashboard)

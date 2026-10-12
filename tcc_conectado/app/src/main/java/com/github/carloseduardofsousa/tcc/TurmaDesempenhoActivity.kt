@@ -33,8 +33,7 @@ data class AlunoDesempenho(
 
 // ── Adapter da lista de alunos ──────────────────────────────
 class AlunoDesempenhoAdapter(
-    private val items: List<AlunoDesempenho>,
-    private val onEnviarPrompt: (AlunoDesempenho) -> Unit
+    private val items: List<AlunoDesempenho>
 ) : RecyclerView.Adapter<AlunoDesempenhoAdapter.VH>() {
 
     inner class VH(val card: LinearLayout) : RecyclerView.ViewHolder(card)
@@ -44,12 +43,12 @@ class AlunoDesempenhoAdapter(
 
         val tvNome = TextView(ctx).apply {
             textSize = 16f
-            setTextColor(Color.parseColor("#1A1A2E"))
+            setTextColor(UiPaleta.hex("#1A1A2E"))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         }
         val tvInfo = TextView(ctx).apply {
             textSize = 13f
-            setTextColor(Color.parseColor("#666680"))
+            setTextColor(UiPaleta.hex("#666680"))
             setPadding(0, 4, 0, 0)
         }
         val textos = LinearLayout(ctx).apply {
@@ -57,16 +56,6 @@ class AlunoDesempenhoAdapter(
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             addView(tvNome)
             addView(tvInfo)
-        }
-        val btnPrompt = Button(ctx).apply {
-            text = "🤖 Prompt IA"
-            textSize = 12f
-            setTextColor(Color.WHITE)
-            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#5C6BC0"))
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
         }
 
         val card = LinearLayout(ctx).apply {
@@ -79,10 +68,10 @@ class AlunoDesempenhoAdapter(
             ).apply { setMargins(0, 0, 0, 12) }
             background = GradientDrawable().apply {
                 cornerRadius = 16f
-                setColor(Color.WHITE)
+                setColor(UiPaleta.superficie())
             }
             addView(textos)
-            addView(btnPrompt)
+
         }
         return VH(card)
     }
@@ -95,8 +84,7 @@ class AlunoDesempenhoAdapter(
         (textos.getChildAt(1) as TextView).text =
             "🏆 ${aluno.pontosTotal} pontos · ${aluno.mesesParticipados} mês(es) ativo(s)"
 
-        val btnPrompt = h.card.getChildAt(1) as Button
-        btnPrompt.setOnClickListener { onEnviarPrompt(aluno) }
+
     }
 
     override fun getItemCount() = items.size
@@ -118,6 +106,7 @@ class TurmaDesempenhoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_turma_desempenho)
+        NavegacaoUi.adicionarVoltar(this)
 
         progressBar = findViewById(R.id.progressBarDesempenho)
         txtTitulo   = findViewById(R.id.txtTituloTurma)
@@ -184,15 +173,7 @@ class TurmaDesempenhoActivity : AppCompatActivity() {
                 scroll.visibility = View.VISIBLE
                 montarGrafico(alunos)
 
-                rvAlunos.adapter = AlunoDesempenhoAdapter(alunos) { aluno ->
-                    val intent = Intent(this, EnviarPromptActivity::class.java)
-                    intent.putExtra("NOME_PROFESSOR", nomeProfessor)
-                    intent.putExtra("ID_TURMA", idTurma)
-                    intent.putExtra("ID_ALUNO", aluno.idAluno)
-                    intent.putExtra("NOME_ALUNO", aluno.nome)
-                    intent.putExtra("PONTOS_ALUNO", aluno.pontosTotal)
-                    startActivity(intent)
-                }
+                rvAlunos.adapter = AlunoDesempenhoAdapter(alunos)
             }
         }.start()
     }
@@ -202,8 +183,8 @@ class TurmaDesempenhoActivity : AppCompatActivity() {
         val primeirosNomes = alunos.map { it.nome.trim().split(" ").first() }
 
         val dataSet = BarDataSet(entries, "Pontos acumulados").apply {
-            color = Color.parseColor("#5C6BC0")
-            valueTextColor = Color.parseColor("#333333")
+            color = UiPaleta.hex("#5C6BC0")
+            valueTextColor = UiPaleta.hex("#333333")
             valueTextSize = 11f
         }
 
@@ -222,14 +203,14 @@ class TurmaDesempenhoActivity : AppCompatActivity() {
                 valueFormatter = IndexAxisValueFormatter(primeirosNomes)
                 granularity = 1f
                 setDrawGridLines(false)
-                textColor = Color.parseColor("#666680")
+                textColor = UiPaleta.hex("#666680")
                 labelRotationAngle = if (alunos.size > 4) -30f else 0f
             }
             axisLeft.apply {
                 axisMinimum = 0f
                 setDrawGridLines(true)
-                gridColor = Color.parseColor("#EEEEF2")
-                textColor = Color.parseColor("#666680")
+                gridColor = UiPaleta.hex("#EEEEF2")
+                textColor = UiPaleta.hex("#666680")
             }
             axisRight.isEnabled = false
 

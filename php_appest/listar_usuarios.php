@@ -21,7 +21,7 @@ if ($busca !== '') {
     $stmt  = $conn->prepare(
         "SELECT id_usuario, nome, email
          FROM usuario
-         WHERE LOWER(tipo_perfil) = 'aluno' AND (nome LIKE ? OR email LIKE ?)
+         WHERE LOWER(tipo_perfil) = 'aluno' AND excluido_em IS NULL AND (nome LIKE ? OR email LIKE ?)
          ORDER BY nome ASC
          LIMIT 100"
     );
@@ -30,7 +30,7 @@ if ($busca !== '') {
     $stmt = $conn->prepare(
         "SELECT id_usuario, nome, email
          FROM usuario
-         WHERE LOWER(tipo_perfil) = 'aluno'
+         WHERE LOWER(tipo_perfil) = 'aluno' AND excluido_em IS NULL
          ORDER BY nome ASC
          LIMIT 100"
     );

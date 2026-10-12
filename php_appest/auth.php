@@ -94,7 +94,7 @@ function usuarioDaSessao($conn, $token)
         "SELECT u.id_usuario, u.nome, u.email, u.tipo_perfil
          FROM sessao s
          JOIN usuario u ON u.id_usuario = s.id_usuario
-         WHERE s.token = ? AND s.ativo = 1 AND s.expira_em > NOW()
+         WHERE s.token = ? AND s.ativo = 1 AND s.expira_em > NOW() AND u.excluido_em IS NULL
          LIMIT 1"
     );
     $stmt->bind_param("s", $token);

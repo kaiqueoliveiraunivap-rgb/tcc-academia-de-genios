@@ -14,6 +14,8 @@ $aluno = exigirUsuarioLogado($conn);
 
 $enunciado = trim($_POST['enunciado'] ?? '');
 $acertou   = inteiroDoPost('acertou', 0, 1);
+$materia   = trim($_POST['materia'] ?? '');
+$idCapitulo = inteiroDoPost('id_capitulo');
 
 if ($enunciado === '') {
     responderErro("Enunciado não informado.", 422);
@@ -21,12 +23,23 @@ if ($enunciado === '') {
 if ($acertou === null) {
     responderErro("O campo acertou deve ser 0 ou 1.", 422);
 }
+if ($materia === '' || mb_strlen($materia) > 100 || $idCapitulo === null) {
+    responderErro("Matéria ou capítulo não informado.", 422);
+}
+$stmt = $conn->prepare("SELECT 1 FROM capitulo_livro c JOIN livro_didatico l ON l.id_livro=c.id_livro WHERE c.id_capitulo=? AND l.materia=? AND c.revisado=1 AND l.ativo=1");
+$stmt->bind_param("is", $idCapitulo, $materia);
+$stmt->execute();
+if ($stmt->get_result()->num_rows !== 1) {
+    $stmt->close();
+    responderErro("Capítulo não disponível.", 422);
+}
+$stmt->close();
 
 $stmt = $conn->prepare(
-    "INSERT INTO historico (id_aluno, id_questao, id_alternativa, acertou, enunciado_gemini)
-     VALUES (?, NULL, NULL, ?, ?)"
+    "INSERT INTO historico (id_aluno, id_questao, id_alternativa, acertou, enunciado_gemini, materia, id_capitulo)
+     VALUES (?, NULL, NULL, ?, ?, ?, ?)"
 );
-$stmt->bind_param("iis", $aluno['id_usuario'], $acertou, $enunciado);
+$stmt->bind_param("iissi", $aluno['id_usuario'], $acertou, $enunciado, $materia, $idCapitulo);
 
 if (!$stmt->execute()) {
     $stmt->close();

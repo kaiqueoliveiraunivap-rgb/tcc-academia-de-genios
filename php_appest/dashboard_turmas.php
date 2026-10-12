@@ -18,13 +18,13 @@ $idProfessor = $professor['id_usuario'];
 
 // ── 1) Turmas do professor + quantidade de alunos matriculados ──────────────
 $stmt = $conn->prepare(
-    "SELECT t.id_turma, t.nome_turma, t.ano_letivo,
+    "SELECT t.id_turma, t.nome_turma, t.serie, t.ano_letivo,
             COUNT(DISTINCT m.id_aluno) AS total_alunos
      FROM turma t
      LEFT JOIN matricula m ON m.id_turma = t.id_turma
      WHERE t.id_professor = ?
-     GROUP BY t.id_turma, t.nome_turma, t.ano_letivo
-     ORDER BY t.ano_letivo DESC, t.nome_turma ASC"
+     GROUP BY t.id_turma, t.nome_turma, t.serie, t.ano_letivo
+     ORDER BY t.ano_letivo DESC, t.serie ASC, t.nome_turma ASC"
 );
 $stmt->bind_param("i", $idProfessor);
 $stmt->execute();
@@ -36,6 +36,7 @@ while ($row = $result->fetch_assoc()) {
     $turmas[$idTurma] = [
         "id_turma"               => $idTurma,
         "nome_turma"             => $row['nome_turma'],
+        "serie"                  => $row['serie'],
         "ano_letivo"             => $row['ano_letivo'],
         "total_alunos"           => intval($row['total_alunos']),
         "total_avaliados"        => 0,

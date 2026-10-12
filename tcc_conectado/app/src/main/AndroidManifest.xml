@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".AcademiaApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -12,7 +13,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:usesCleartextTraffic="true"
+        android:usesCleartextTraffic="${cleartextTraffic}"
         android:theme="@style/Theme.Tcc">
 
         <!-- O app passa a abrir pelo login. Antes o LAUNCHER estava na
@@ -30,6 +31,15 @@
         <activity
             android:name=".CadastroProfessorActivity"
             android:exported="false"/>
+
+        <activity android:name=".CapitulosActivity" android:exported="false"/>
+        <activity android:name=".HistoricoActivity" android:exported="false"/>
+        <activity android:name=".RevisaoQuizActivity" android:exported="false"/>
+        <activity android:name=".FrentesActivity" android:exported="false"/>
+        <activity android:name=".MenuActivity" android:exported="false"/>
+        <activity android:name=".MinhaContaActivity" android:exported="false"/>
+        <activity android:name=".SelecionarRelatorioActivity" android:exported="false"/>
+        <activity android:name=".DesempenhoTopicosActivity" android:exported="false"/>
 
         <activity
             android:name=".MainActivity"

@@ -1,9 +1,11 @@
 package com.github.carloseduardofsousa.tcc
 
+import android.util.Log
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
+import java.net.URLEncoder
 import java.net.URL
 
 /** Resposta crua do servidor: código HTTP + corpo. */
@@ -30,20 +32,23 @@ object ApiClient {
      * "sessão expirada" ou "sem permissão", em vez de mostrar sempre a
      * mesma mensagem genérica de falha de conexão.
      */
-    fun postComStatus(endpoint: String, params: Map<String, String>): ApiResposta {
+    fun postComStatus(endpoint: String, params: Map<String, String>, timeoutMs: Int = 8000): ApiResposta {
+        var conexao: HttpURLConnection? = null
         return try {
             val url = URL(ApiConfig.BASE_URL + endpoint)
-            val conn = url.openConnection() as HttpURLConnection
+            val conn = (url.openConnection() as HttpURLConnection).also { conexao = it }
             conn.requestMethod = "POST"
             conn.doOutput = true
             conn.connectTimeout = 8000
-            conn.readTimeout = 8000
+            conn.readTimeout = timeoutMs
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+            conn.setRequestProperty("Accept", "application/json")
 
             val body = params.entries.joinToString("&") { (k, v) ->
-                "${k}=${java.net.URLEncoder.encode(v, "UTF-8")}"
+                "${URLEncoder.encode(k, "UTF-8")}=${URLEncoder.encode(v, "UTF-8")}"
             }
 
-            OutputStreamWriter(conn.outputStream).use { it.write(body) }
+            OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
 
             val codigo = conn.responseCode
             val stream = if (codigo in 200..299) conn.inputStream else conn.errorStream
@@ -54,8 +59,11 @@ object ApiClient {
 
             ApiResposta(codigo, corpo)
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Sem corpo ou dados de sessão no log; a tela decide a mensagem ao usuário.
+            Log.w("ApiClient", "Falha de rede em $endpoint: ${e.javaClass.simpleName}")
             ApiResposta(0, null)
+        } finally {
+            conexao?.disconnect()
         }
     }
 }

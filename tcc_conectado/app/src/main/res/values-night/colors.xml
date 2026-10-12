@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="BackGround">#151B2A</color>
+    <color name="FundoBarra">#354058</color>
+    <color name="PreencherBarra">#E7BA58</color>
+    <color name="btnOpcoes">#263149</color>
+    <color name="BordaButton">#B8C3D5</color>
+    <color name="btnSelecionado">#C7D1FF</color>
+    <color name="OptCerta">#86D5A8</color>
+    <color name="OptErrada">#FF9AA5</color>
+    <color name="Destaque">#8292EF</color>
+    <color name="CardFundo">#232D43</color>
+    <color name="TextoPrincipal">#F0F3FB</color>
+    <color name="TextoSecundario">#B8C3D5</color>
+    <color name="LabelSecao">#A7B2C8</color>
+    <color name="ChipFundo">#303B55</color>
+    <color name="ChipTexto">#E7EBF7</color>
+    <color name="GradeGrafico">#3D4861</color>
+    <color name="SetaCard">#B5C0F5</color>
+    <color name="BordaCard">#3D4961</color>
+    <color name="DestaqueSuave">#313C5A</color>
+    <color name="TextoNoPrimario">#FFFFFF</color>
+    <color name="FundoElevado">#29354D</color>
+    <color name="ErroTexto">#FFC5CF</color>
+    <color name="ErroFundo">#4A2935</color>
+    <color name="Serie1">#8292EF</color>
+    <color name="Serie2">#64C9B9</color>
+    <color name="Serie3">#E7BA58</color>
+    <color name="Serie4">#AC8DE3</color>
+    <color name="Serie5">#EF927E</color>
+</resources>

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/raizMaterias"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FAFAFA"
+        android:background="@color/BackGround"
         android:fillViewport="true">
 
         <LinearLayout
@@ -14,6 +15,16 @@
             android:orientation="vertical"
             android:padding="24dp">
 
+            <TextView
+                android:id="@+id/btnVoltarMaterias"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:contentDescription="Voltar ao menu"
+                android:text="‹  Voltar"
+                android:textColor="@color/Destaque"
+                android:textSize="16sp" />
+
             <!-- Título -->
             <TextView
                 android:layout_width="wrap_content"
@@ -21,15 +32,15 @@
                 android:text="O que vamos estudar?"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A2E"
+                android:textColor="@color/TextoPrincipal"
                 android:layout_marginTop="16dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Escolha a matéria e a dificuldade"
+                android:text="Escolha a matéria que deseja estudar"
                 android:textSize="14sp"
-                android:textColor="#666680"
+                android:textColor="@color/TextoSecundario"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="24dp"/>
 
@@ -38,9 +49,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="MATÉRIA"
-                android:textSize="11sp"
+                android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="#999999"
+                android:textColor="@color/BordaButton"
                 android:letterSpacing="0.12"
                 android:layout_marginBottom="8dp"/>
 
@@ -51,60 +62,6 @@
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
                 android:layout_marginBottom="24dp"/>
-
-            <!-- Label dificuldade -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="DIFICULDADE"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#999999"
-                android:letterSpacing="0.12"
-                android:layout_marginBottom="8dp"/>
-
-            <!-- Botões de dificuldade -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="28dp">
-
-                <Button
-                    android:id="@+id/btnFacil"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="4dp"
-                    android:text="😊 Fácil"
-                    android:textSize="13sp"
-                    android:textColor="#555555"
-                    android:backgroundTint="#EEEEEE"/>
-
-                <Button
-                    android:id="@+id/btnMedio"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:text="🎯 Médio"
-                    android:textSize="13sp"
-                    android:textColor="#555555"
-                    android:backgroundTint="#EEEEEE"/>
-
-                <Button
-                    android:id="@+id/btnDificil"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:text="🔥 Difícil"
-                    android:textSize="13sp"
-                    android:textColor="#555555"
-                    android:backgroundTint="#EEEEEE"/>
-
-            </LinearLayout>
 
             <!-- Loading -->
             <LinearLayout
@@ -126,7 +83,7 @@
                     android:layout_height="wrap_content"
                     android:text="✨ Gerando questões com IA..."
                     android:textSize="14sp"
-                    android:textColor="#5C6BC0"
+                    android:textColor="@color/Destaque"
                     android:gravity="center"
                     android:visibility="gone"
                     android:layout_marginTop="8dp"/>
@@ -137,12 +94,14 @@
             <Button
                 android:id="@+id/btnIniciar"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="wrap_content"
+                android:minHeight="52dp"
+                android:padding="12dp"
                 android:text="Iniciar Quiz"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:backgroundTint="#5C6BC0"
+                android:textColor="@color/TextoNoPrimario"
+                android:backgroundTint="@color/Destaque"
                 android:enabled="false"
                 android:alpha="0.5"
                 android:layout_marginTop="8dp"

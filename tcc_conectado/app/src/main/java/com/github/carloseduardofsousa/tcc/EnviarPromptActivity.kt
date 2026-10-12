@@ -14,7 +14,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 class EnviarPromptActivity : AppCompatActivity() {
@@ -22,9 +26,6 @@ class EnviarPromptActivity : AppCompatActivity() {
     private data class MateriaChip(val nome: String, val emoji: String)
 
     private lateinit var containerMaterias: LinearLayout
-    private lateinit var btnFacil: Button
-    private lateinit var btnMedio: Button
-    private lateinit var btnDificil: Button
     private lateinit var etInstrucao: TextInputEditText
     private lateinit var btnGerarPreview: Button
     private lateinit var cardPreview: CardView
@@ -34,32 +35,28 @@ class EnviarPromptActivity : AppCompatActivity() {
 
     private var nomeProfessor = ""
     private var idTurma = 0
-    private var idAluno = 0
-    private var nomeAluno = ""
-    private var pontosAluno = 0
+    private var nomeTurma = ""
+    private var enviando = false
 
     private var materiaSelecionada: String? = null
-    private var dificuldade = "MEDIO"
     private var promptFinalAtual: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_enviar_prompt)
+        NavegacaoUi.adicionarVoltar(this)
 
-        nomeProfessor = intent.getStringExtra("NOME_PROFESSOR") ?: "Professor(a)"
+        if (!Sessao.ehProfessor(this)) { Sessao.encerrar(this); finish(); return }
+        nomeProfessor = Sessao.nome(this)
         idTurma       = intent.getIntExtra("ID_TURMA", 0)
-        idAluno       = intent.getIntExtra("ID_ALUNO", 0)
-        nomeAluno     = intent.getStringExtra("NOME_ALUNO") ?: "Aluno"
-        pontosAluno   = intent.getIntExtra("PONTOS_ALUNO", 0)
+        nomeTurma     = intent.getStringExtra("NOME_TURMA") ?: "Turma"
+        if (idTurma <= 0) { finish(); return }
 
-        findViewById<TextView>(R.id.txtTituloPrompt).text = "Prompt para $nomeAluno"
+        findViewById<TextView>(R.id.txtTituloPrompt).text = "Estudo de $nomeTurma"
         findViewById<TextView>(R.id.txtSubtituloPrompt).text =
-            "$pontosAluno pontos acumulados nesta turma"
+            "A orientação será aplicada a todos os alunos da turma nesta matéria, até ser substituída."
 
         containerMaterias = findViewById(R.id.containerMaterias)
-        btnFacil          = findViewById(R.id.btnFacilPrompt)
-        btnMedio          = findViewById(R.id.btnMedioPrompt)
-        btnDificil        = findViewById(R.id.btnDificilPrompt)
         etInstrucao       = findViewById(R.id.etInstrucaoProfessor)
         btnGerarPreview   = findViewById(R.id.btnGerarPreview)
         cardPreview       = findViewById(R.id.cardPreview)
@@ -68,11 +65,6 @@ class EnviarPromptActivity : AppCompatActivity() {
         btnEnviar         = findViewById(R.id.btnEnviarPrompt)
 
         montarChipsMaterias()
-
-        btnFacil.setOnClickListener   { selecionarDificuldade("FACIL") }
-        btnMedio.setOnClickListener   { selecionarDificuldade("MEDIO") }
-        btnDificil.setOnClickListener { selecionarDificuldade("DIFICIL") }
-        selecionarDificuldade("MEDIO")
 
         btnGerarPreview.setOnClickListener { gerarPreview() }
         btnEnviar.setOnClickListener { enviarPrompt() }
@@ -83,28 +75,62 @@ class EnviarPromptActivity : AppCompatActivity() {
     }
 
     private fun montarChipsMaterias() {
-        val materias = listOf(
-            MateriaChip("Matemática", "📐"),
-            MateriaChip("História",   "📜"),
-            MateriaChip("Geografia",  "🌍"),
-            MateriaChip("Ciências",   "🔬"),
-            MateriaChip("Português",  "📖"),
-            MateriaChip("Inglês",     "🇺🇸"),
-            MateriaChip("Física",     "⚛️"),
-            MateriaChip("Química",    "🧪"),
-            MateriaChip("Biologia",   "🧬"),
-            MateriaChip("Filosofia",  "🤔"),
-        )
+        containerMaterias.removeAllViews()
+        progressBar.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            val resposta = withContext(Dispatchers.IO) {
+                ApiClient.postComStatus("listar_materias.php", mapOf("token" to Sessao.token(this@EnviarPromptActivity)))
+            }
+            progressBar.visibility = View.GONE
+            if (resposta.sessaoExpirada) { Sessao.encerrar(this@EnviarPromptActivity); finish(); return@launch }
+            val json = runCatching { JSONObject(resposta.corpo.orEmpty()) }.getOrNull()
+            if (!resposta.sucesso || json?.optString("status") != "sucesso") {
+                containerMaterias.addView(TextView(this@EnviarPromptActivity).apply {
+                    text = "Não foi possível carregar as matérias. Toque para tentar novamente."
+                    setOnClickListener { montarChipsMaterias() }
+                })
+                return@launch
+            }
+            val array = json.getJSONArray("materias")
+            val materias = (0 until array.length()).mapNotNull { i ->
+                val materia = array.getJSONObject(i)
+                if (materia.optInt("capitulos_disponiveis") <= 0) null else {
+                    val nome = materia.getString("nome")
+                    MateriaChip(nome, emojiDaMateria(nome))
+                }
+            }
+            if (materias.isEmpty()) {
+                containerMaterias.addView(TextView(this@EnviarPromptActivity).apply { text = "Nenhuma matéria com capítulos disponíveis." })
+                return@launch
+            }
+            mostrarChipsMaterias(materias)
+        }
+    }
 
+    private fun emojiDaMateria(nome: String): String = when (nome.lowercase()) {
+        "matemática", "matematica" -> "📐"
+        "história", "historia" -> "📜"
+        "geografia" -> "🌍"
+        "português", "portugues" -> "📖"
+        "física", "fisica" -> "⚛️"
+        "química", "quimica" -> "🧪"
+        "biologia" -> "🧬"
+        "filosofia" -> "🤔"
+        "sociologia" -> "👥"
+        "redação", "redacao" -> "✍️"
+        else -> "📘"
+    }
+
+    private fun mostrarChipsMaterias(materias: List<MateriaChip>) {
         val chips = materias.map { materia ->
             TextView(this).apply {
                 text = "${materia.emoji}  ${materia.nome}"
                 textSize = 13f
                 setPadding(28, 18, 28, 18)
-                setTextColor(Color.parseColor("#333333"))
+                setTextColor(UiPaleta.hex("#333333"))
                 background = GradientDrawable().apply {
                     cornerRadius = 40f
-                    setColor(Color.parseColor("#F0F0F5"))
+                    setColor(UiPaleta.hex("#F0F0F5"))
                 }
                 layoutParams = ViewGroup.MarginLayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -116,29 +142,18 @@ class EnviarPromptActivity : AppCompatActivity() {
 
         chips.forEachIndexed { i, chip ->
             chip.setOnClickListener {
+                if (enviando) return@setOnClickListener
                 materiaSelecionada = materias[i].nome
                 chips.forEach {
-                    it.setTextColor(Color.parseColor("#333333"))
-                    (it.background as GradientDrawable).setColor(Color.parseColor("#F0F0F5"))
+                    it.setTextColor(UiPaleta.hex("#333333"))
+                    (it.background as GradientDrawable).setColor(UiPaleta.hex("#F0F0F5"))
                 }
                 chip.setTextColor(Color.WHITE)
-                (chip.background as GradientDrawable).setColor(Color.parseColor("#5C6BC0"))
+                (chip.background as GradientDrawable).setColor(UiPaleta.hex("#5C6BC0"))
                 invalidarPreview()
             }
             containerMaterias.addView(chip)
         }
-    }
-
-    private fun selecionarDificuldade(nivel: String) {
-        dificuldade = nivel
-        listOf(btnFacil to "FACIL", btnMedio to "MEDIO", btnDificil to "DIFICIL").forEach { (btn, n) ->
-            val sel = n == nivel
-            btn.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                if (sel) Color.parseColor("#5C6BC0") else Color.parseColor("#EEEEEE")
-            )
-            btn.setTextColor(if (sel) Color.WHITE else Color.parseColor("#555555"))
-        }
-        invalidarPreview()
     }
 
     private fun invalidarPreview() {
@@ -159,17 +174,15 @@ class EnviarPromptActivity : AppCompatActivity() {
             return
         }
         if (instrucao.isEmpty()) {
-            Toast.makeText(this, "Escreva o que a IA deve priorizar para o aluno.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Escreva o que a turma precisa reforçar.", Toast.LENGTH_SHORT).show()
             return
         }
 
         val prompt = PromptProfessorBuilder.montar(
-            nomeAluno       = nomeAluno,
+            nomeTurma       = nomeTurma,
             nomeProfessor   = nomeProfessor,
             materia         = materia,
-            dificuldade     = dificuldade,
-            instrucaoBruta  = instrucao,
-            pontosTotal     = pontosAluno
+            instrucaoBruta  = instrucao
         )
 
         promptFinalAtual = prompt
@@ -180,61 +193,37 @@ class EnviarPromptActivity : AppCompatActivity() {
     }
 
     private fun enviarPrompt() {
+        if (enviando || promptFinalAtual == null) return
         val materia = materiaSelecionada ?: return
         val instrucao = etInstrucao.text?.toString()?.trim().orEmpty()
-        val promptFinal = promptFinalAtual ?: return
-
+        enviando = true
         progressBar.visibility = View.VISIBLE
         btnEnviar.isEnabled = false
-
-        Thread {
-            // O id_professor não vai mais na requisição: o servidor tira o autor
-            // do token, então mandá-lo seria informação que ele ignora.
-            val resposta = ApiClient.postComStatus(
-                "enviar_prompt_professor.php",
-                mapOf(
-                    "token"        to Sessao.token(this),
-                    "id_aluno"     to idAluno.toString(),
-                    "id_turma"     to idTurma.toString(),
-                    "materia"      to materia,
-                    "dificuldade"  to dificuldade,
-                    "instrucao"    to instrucao,
-                    "prompt_final" to promptFinal
-                )
-            )
-
-            runOnUiThread {
-                progressBar.visibility = View.GONE
-                btnEnviar.isEnabled = true
-
-                if (resposta.sessaoExpirada) {
-                    Toast.makeText(this, "Sessão expirada. Faça login novamente.", Toast.LENGTH_LONG).show()
-                    Sessao.encerrar(this)
-                    finish()
-                    return@runOnUiThread
-                }
-
-                if (resposta.corpo.isNullOrBlank()) {
-                    Toast.makeText(this, "Erro de conexão. Verifique o servidor.", Toast.LENGTH_LONG).show()
-                    return@runOnUiThread
-                }
-
-                try {
-                    val json = JSONObject(resposta.corpo)
-                    if (json.optString("status") == "sucesso") {
-                        Toast.makeText(
-                            this,
-                            "Prompt enviado! $nomeAluno vai receber essa orientação no próximo quiz.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        finish()
-                    } else {
-                        Toast.makeText(this, json.optString("mensagem", "Não foi possível enviar."), Toast.LENGTH_LONG).show()
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Resposta inesperada do servidor.", Toast.LENGTH_SHORT).show()
-                }
+        btnGerarPreview.isEnabled = false
+        etInstrucao.isEnabled = false
+        val parametros = mapOf(
+            "token" to Sessao.token(this), "id_turma" to idTurma.toString(),
+            "materia" to materia, "instrucao" to instrucao
+        )
+        lifecycleScope.launch {
+            val resposta = withContext(Dispatchers.IO) {
+                ApiClient.postComStatus("enviar_prompt_professor.php", parametros)
             }
-        }.start()
+            enviando = false
+            progressBar.visibility = View.GONE
+            btnEnviar.isEnabled = true
+            btnGerarPreview.isEnabled = true
+            etInstrucao.isEnabled = true
+            if (resposta.sessaoExpirada) {
+                Sessao.encerrar(this@EnviarPromptActivity); finish(); return@launch
+            }
+            val json = runCatching { JSONObject(resposta.corpo.orEmpty()) }.getOrNull()
+            if (resposta.sucesso && json?.optString("status") == "sucesso") {
+                Toast.makeText(this@EnviarPromptActivity, "Orientação aplicada a todos os alunos de $nomeTurma.", Toast.LENGTH_LONG).show()
+                finish()
+            } else {
+                Toast.makeText(this@EnviarPromptActivity, json?.optString("mensagem") ?: "Não foi possível salvar. Tente novamente.", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }

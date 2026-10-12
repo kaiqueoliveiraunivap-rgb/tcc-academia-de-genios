@@ -12,13 +12,19 @@ require_once 'auth.php';
 
 exigirUsuarioLogado($conn);
 
-$result = $conn->query("SELECT id_materia, nome FROM materia ORDER BY nome ASC");
+$result = $conn->query("SELECT MIN(l.id_livro) AS id_materia, l.materia AS nome,
+ SUM(CASE WHEN c.revisado=1 THEN 1 ELSE 0 END) AS capitulos_disponiveis
+ FROM livro_didatico l
+ LEFT JOIN capitulo_livro c ON c.id_livro=l.id_livro
+ WHERE l.ativo=1
+ GROUP BY l.materia ORDER BY l.materia ASC");
 
 $dados = [];
 while ($row = $result->fetch_assoc()) {
     $row['id_materia'] = intval($row['id_materia']);
+    $row['capitulos_disponiveis'] = intval($row['capitulos_disponiveis']);
     $dados[] = $row;
 }
 $result->free();
 
-responderJson($dados);
+responderJson(['status'=>'sucesso','materias'=>$dados]);

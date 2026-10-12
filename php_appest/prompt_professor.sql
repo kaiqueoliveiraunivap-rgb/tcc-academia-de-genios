@@ -1,16 +1,17 @@
 -- Tabela usada pela tela "Enviar prompt para IA" do professor.
--- Guarda a orientação que o professor escreveu para um aluno e o prompt
--- já formatado que será entregue à Gemini na próxima vez que esse aluno
--- gerar um quiz (ver buscar_prompt_pendente.php).
+-- Orientações novas são da turma: id_aluno NULL. As individuais antigas
+-- permanecem no histórico. usado=1 indica uma orientação substituída.
 --
 -- Rode este script uma vez no banco "appest" (mesmo banco usado em conexao.php).
 
 CREATE TABLE IF NOT EXISTS prompt_professor (
     id_prompt     INT AUTO_INCREMENT PRIMARY KEY,
     id_professor  INT NOT NULL,
-    id_aluno      INT NOT NULL,
+    id_aluno      INT NULL,
     id_turma      INT NOT NULL,
     materia       VARCHAR(100) NOT NULL,
+    id_livro      INT NULL,
+    bimestre      TINYINT NULL,
     dificuldade   VARCHAR(20)  NOT NULL DEFAULT 'MEDIO',
     instrucao     TEXT NOT NULL,
     prompt_final  TEXT NOT NULL,

@@ -24,7 +24,7 @@ exigirTurmaDoProfessor($conn, $idTurma, $professor['id_usuario']);
 // Só matricula quem é aluno: sem esta checagem dava para matricular um
 // professor como se fosse estudante da própria turma.
 $stmt = $conn->prepare(
-    "SELECT 1 FROM usuario WHERE id_usuario = ? AND LOWER(tipo_perfil) = 'aluno' LIMIT 1"
+    "SELECT 1 FROM usuario WHERE id_usuario = ? AND LOWER(tipo_perfil) = 'aluno' AND excluido_em IS NULL LIMIT 1"
 );
 $stmt->bind_param("i", $idAluno);
 $stmt->execute();

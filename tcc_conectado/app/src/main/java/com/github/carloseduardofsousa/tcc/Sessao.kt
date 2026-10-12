@@ -51,7 +51,10 @@ object Sessao {
 
     fun idTurma(context: Context): Int = prefs(context).getInt(KEY_ID_TURMA, 0)
 
-    fun estaLogado(context: Context): Boolean = token(context).isNotEmpty()
+    // O Android atende apenas alunos e professores. Sessões de outros perfis
+    // salvas por versões anteriores não habilitam as telas do aplicativo.
+    fun estaLogado(context: Context): Boolean = token(context).isNotEmpty() &&
+        (tipoPerfil(context) == "aluno" || tipoPerfil(context) == "professor")
 
     fun ehProfessor(context: Context): Boolean = tipoPerfil(context) == "professor"
 

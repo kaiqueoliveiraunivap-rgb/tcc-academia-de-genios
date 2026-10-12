@@ -39,13 +39,13 @@ class TurmaAdapter(
         val tvNome = TextView(ctx).apply {
             id = View.generateViewId()
             textSize = 17f
-            setTextColor(Color.parseColor("#1A237E"))
+            setTextColor(UiPaleta.hex("#1A237E"))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         }
         val tvInfo = TextView(ctx).apply {
             id = View.generateViewId()
             textSize = 13f
-            setTextColor(Color.parseColor("#666680"))
+            setTextColor(UiPaleta.hex("#666680"))
             setPadding(0, 4, 0, 0)
         }
         val textos = LinearLayout(ctx).apply {
@@ -57,7 +57,7 @@ class TurmaAdapter(
         val seta = TextView(ctx).apply {
             text = "›"
             textSize = 24f
-            setTextColor(Color.parseColor("#9FA8DA"))
+            setTextColor(UiPaleta.hex("#9FA8DA"))
             gravity = Gravity.CENTER
         }
 
@@ -71,7 +71,7 @@ class TurmaAdapter(
             ).apply { setMargins(0, 0, 0, 14) }
             background = GradientDrawable().apply {
                 cornerRadius = 18f
-                setColor(Color.WHITE)
+                setColor(UiPaleta.superficie())
             }
             addView(textos)
             addView(seta)
@@ -104,6 +104,7 @@ class ProfessorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_professor)
+        NavegacaoUi.adicionarVoltar(this)
 
         // Sem sessão de professor esta tela não abre. A checagem que vale é a
         // do servidor, que confere o token a cada requisição; esta aqui só
@@ -183,9 +184,10 @@ class ProfessorActivity : AppCompatActivity() {
                 }
 
                 rvTurmas.adapter = TurmaAdapter(turmas) { turma ->
-                    val intent = Intent(this, TurmaDesempenhoActivity::class.java)
+                    val intent = Intent(this, EnviarPromptActivity::class.java)
                     intent.putExtra("ID_TURMA", turma.idTurma)
                     intent.putExtra("NOME_TURMA", turma.nomeTurma)
+                    intent.putExtra("TOTAL_ALUNOS", turma.totalAlunos)
                     intent.putExtra("NOME_PROFESSOR", nomeProfessor)
                     startActivity(intent)
                 }

@@ -1,0 +1,52 @@
+{
+  "titulo": "Matemática básica e vetores",
+  "materia": "Matemática",
+  "fonte_url": "https://drive.google.com/file/d/1xaGeaJNi_XcI6-9rKsSIZLVXGHRluRBZ/view",
+  "capitulos": [
+    {
+      "titulo": "Cap 1 - Conjuntos numéricos e Aritmética",
+      "inicio": 1,
+      "fim": 18
+    },
+    {
+      "titulo": "Cap 2 - Potência e raízes",
+      "inicio": 19,
+      "fim": 28
+    },
+    {
+      "titulo": "Cap 3 - Mínimo múltiplo comum e máximo divisor comum",
+      "inicio": 29,
+      "fim": 36
+    },
+    {
+      "titulo": "Cap 4 - Produtos notáveis e fatoração",
+      "inicio": 37,
+      "fim": 46
+    },
+    {
+      "titulo": "Cap 5 - Equação do 1º grau e equação do 2º grau",
+      "inicio": 47,
+      "fim": 58
+    },
+    {
+      "titulo": "Cap 6 - Razão e proporção",
+      "inicio": 59,
+      "fim": 72
+    },
+    {
+      "titulo": "Cap 7 - Triângulo retângulos",
+      "inicio": 73,
+      "fim": 80
+    },
+    {
+      "titulo": "Cap 8 - Plano cartesiano, gráficos e relações",
+      "inicio": 81,
+      "fim": 90
+    },
+    {
+      "titulo": "Cap 9 - Sistema métrico e conversão de unidades",
+      "inicio": 91,
+      "fim": 96
+    }
+  ]
+}

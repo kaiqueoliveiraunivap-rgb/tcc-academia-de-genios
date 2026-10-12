@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.Toast
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -34,10 +35,12 @@ class CadastroProfessorActivity : AppCompatActivity() {
 
     private lateinit var btnCadastrar: Button
     private lateinit var progressBar: ProgressBar
+    private var cadastroAluno = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cadastro_professor)
+        cadastroAluno = intent.getStringExtra("PERFIL_CADASTRO") == "aluno"
 
         tilNome            = findViewById(R.id.tilNomeCadastro)
         tilEmail           = findViewById(R.id.tilEmailCadastro)
@@ -53,6 +56,11 @@ class CadastroProfessorActivity : AppCompatActivity() {
 
         btnCadastrar = findViewById(R.id.btnCadastrar)
         progressBar  = findViewById(R.id.progressBarCadastro)
+        if (cadastroAluno) {
+            findViewById<TextView>(R.id.txtTituloCadastro).text = "Cadastro de aluno"
+            findViewById<TextView>(R.id.txtSubtituloCadastro).text = "Crie sua conta para começar a estudar."
+            tilConvite.visibility = View.GONE
+        }
 
         btnCadastrar.setOnClickListener { cadastrar() }
         findViewById<Button>(R.id.btnVoltarLogin).setOnClickListener { finish() }
@@ -72,7 +80,7 @@ class CadastroProfessorActivity : AppCompatActivity() {
 
         Thread {
             val resposta = ApiClient.postComStatus(
-                "cadastrar_professor.php",
+                if (cadastroAluno) "inserir_usuario.php" else "cadastrar_professor.php",
                 mapOf(
                     "nome"           to nome,
                     "email"          to email,
@@ -152,7 +160,7 @@ class CadastroProfessorActivity : AppCompatActivity() {
             tilConfirmarSenha.error = "As senhas não conferem."
             valido = false
         }
-        if (convite.isEmpty()) {
+        if (!cadastroAluno && convite.isEmpty()) {
             tilConvite.error = "Informe o código de convite."
             valido = false
         }

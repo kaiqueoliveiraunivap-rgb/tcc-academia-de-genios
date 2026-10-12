@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 // ── Modelo ───────────────────────────────────────────────────
-data class MateriaItem(val nome: String, val emoji: String)
+data class MateriaItem(val nome: String, val emoji: String, val capitulos: Int)
 
 // ── Adapter do grid de matérias ──────────────────────────────
 class MateriaAdapter(
@@ -36,21 +36,23 @@ class MateriaAdapter(
             gravity = Gravity.CENTER
         }
         val label = TextView(ctx).apply {
-            textSize = 13f
-            gravity = Gravity.CENTER
-            setPadding(4, 4, 4, 0)
-            maxLines = 2
+            textSize = 16f
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(EstudoUi.dp(ctx, 14), 0, 0, 0)
         }
+        val status = TextView(ctx).apply { textSize = 13f; gravity = Gravity.CENTER_VERTICAL }
         val card = LinearLayout(ctx).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(12, 20, 12, 20)
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = EstudoUi.dp(ctx, 76)
+            isFocusable = true
+            setPadding(EstudoUi.dp(ctx, 18), EstudoUi.dp(ctx, 12), EstudoUi.dp(ctx, 18), EstudoUi.dp(ctx, 12))
             layoutParams = ViewGroup.MarginLayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(8, 8, 8, 8) }
+            ).apply { setMargins(0, EstudoUi.dp(ctx, 5), 0, EstudoUi.dp(ctx, 5)) }
             addView(emoji)
-            addView(label)
+            addView(LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; addView(label); addView(status.apply { setPadding(EstudoUi.dp(ctx, 14), 0, 0, 0) }) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         }
         return VH(card)
     }
@@ -60,17 +62,20 @@ class MateriaAdapter(
         val isSelected = position == selectedPos
 
         (h.card.getChildAt(0) as TextView).text = item.emoji
-        (h.card.getChildAt(1) as TextView).apply {
+        val textos = h.card.getChildAt(1) as LinearLayout
+        (textos.getChildAt(0) as TextView).apply {
             text = item.nome
-            setTextColor(if (isSelected) Color.WHITE else Color.parseColor("#333333"))
+            setTextColor(if (isSelected) Color.WHITE else UiPaleta.hex("#1A1A2E"))
         }
+        (textos.getChildAt(1) as TextView).apply { text = if (item.capitulos > 0) "${item.capitulos} capítulos disponíveis" else "Em preparação"; setTextColor(if (isSelected) Color.WHITE else UiPaleta.hex("#666680")) }
         h.card.background = GradientDrawable().apply {
-            cornerRadius = 16f
-            setColor(if (isSelected) Color.parseColor("#5C6BC0") else Color.parseColor("#F0F0F5"))
+            cornerRadius = EstudoUi.dp(h.card.context, 16).toFloat()
+            setColor(if (isSelected) UiPaleta.hex("#5C6BC0") else UiPaleta.superficie())
+            setStroke(EstudoUi.dp(h.card.context, 1), UiPaleta.hex("#E1E3EE"))
         }
         h.card.setOnClickListener {
             val pos = h.bindingAdapterPosition
-            if (pos == RecyclerView.NO_POSITION) return@setOnClickListener
+            if (pos == RecyclerView.NO_POSITION || items[pos].capitulos == 0) return@setOnClickListener
 
             val prev = selectedPos
             selectedPos = pos
@@ -81,148 +86,101 @@ class MateriaAdapter(
     }
 
     override fun getItemCount() = items.size
+    fun selecionar(posicao: Int) {
+        selectedPos = posicao
+        if (posicao in items.indices) notifyItemChanged(posicao)
+    }
 }
 
 // ── Activity ─────────────────────────────────────────────────
 class SelecionarMateriaActivity : AppCompatActivity() {
 
     private var materiaSelecionada: MateriaItem? = null
-    private var dificuldade = "MEDIO"
-
-    private lateinit var btnFacil:   Button
-    private lateinit var btnMedio:   Button
-    private lateinit var btnDificil: Button
     private lateinit var btnIniciar: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var tvCarregando: TextView
+    private var falhou = false
+    private var carregando = false
+    private var materiaRestaurada: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!Sessao.estaLogado(this)) { Sessao.encerrar(this); finish(); return }
         setContentView(R.layout.activity_selecionar_materia)
+        EstudoUi.protegerBarras(findViewById(R.id.raizMaterias))
+        findViewById<TextView>(R.id.btnVoltarMaterias).setOnClickListener { finish() }
 
         // Liga as views ao XML pelo ID
-        btnFacil      = findViewById(R.id.btnFacil)
-        btnMedio      = findViewById(R.id.btnMedio)
-        btnDificil    = findViewById(R.id.btnDificil)
         btnIniciar    = findViewById(R.id.btnIniciar)
         progressBar   = findViewById(R.id.progressBar)
         tvCarregando  = findViewById(R.id.tvCarregando)
 
-        val materias = listOf(
-            MateriaItem("Matemática", "📐"),
-            MateriaItem("História",   "📜"),
-            MateriaItem("Geografia",  "🌍"),
-            MateriaItem("Ciências",   "🔬"),
-            MateriaItem("Português",  "📖"),
-            MateriaItem("Inglês",     "🇺🇸"),
-            MateriaItem("Física",     "⚛️"),
-            MateriaItem("Química",    "🧪"),
-            MateriaItem("Biologia",   "🧬"),
-            MateriaItem("Filosofia",  "🤔"),
-        )
-
         val rvMaterias = findViewById<RecyclerView>(R.id.rvMaterias)
-        rvMaterias.layoutManager = GridLayoutManager(this, 2)
-        rvMaterias.adapter = MateriaAdapter(materias) { item ->
-            materiaSelecionada = item
-            btnIniciar.isEnabled = true
-            btnIniciar.alpha = 1f
-        }
+        rvMaterias.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        materiaRestaurada = savedInstanceState?.getString("materia")
 
-        btnFacil.setOnClickListener   { selecionarDificuldade("FACIL") }
-        btnMedio.setOnClickListener   { selecionarDificuldade("MEDIO") }
-        btnDificil.setOnClickListener { selecionarDificuldade("DIFICIL") }
-        btnIniciar.setOnClickListener { iniciarQuiz() }
+        btnIniciar.text = "Escolher frente"
+        btnIniciar.setOnClickListener { if (falhou) carregarMaterias(rvMaterias) else abrirFrentes() }
 
-        selecionarDificuldade("MEDIO")
+        carregarMaterias(rvMaterias)
     }
 
-    private fun selecionarDificuldade(nivel: String) {
-        dificuldade = nivel
-        listOf(btnFacil to "FACIL", btnMedio to "MEDIO", btnDificil to "DIFICIL").forEach { (btn, n) ->
-            val sel = n == nivel
-            btn.backgroundTintList = android.content.res.ColorStateList.valueOf(
-                if (sel) Color.parseColor("#5C6BC0") else Color.parseColor("#EEEEEE")
-            )
-            btn.setTextColor(if (sel) Color.WHITE else Color.parseColor("#555555"))
-        }
-    }
-
-    private fun iniciarQuiz() {
-        val materia = materiaSelecionada ?: return
-
-        progressBar.visibility  = View.VISIBLE
-        tvCarregando.visibility = View.VISIBLE
-        btnIniciar.isEnabled    = false
-        btnIniciar.alpha        = 0.6f
-
+    private fun carregarMaterias(lista: RecyclerView) {
+        if (carregando) return
+        carregando = true; falhou = false; btnIniciar.isEnabled = false
+        progressBar.visibility = View.VISIBLE
+        tvCarregando.apply { text = "Carregando matérias disponíveis…"; visibility = View.VISIBLE }
         lifecycleScope.launch {
-            val instrucaoProfessor = buscarInstrucaoProfessor()
-
-            val resultado = GeminiService.gerarQuestoes(
-                materia             = materia.nome,
-                dificuldade         = dificuldade,
-                quantidade          = 5,
-                instrucaoProfessor  = instrucaoProfessor
-            )
-
-            progressBar.visibility  = View.GONE
-            tvCarregando.visibility = View.GONE
-            btnIniciar.isEnabled    = true
-            btnIniciar.alpha        = 1f
-
-            resultado.fold(
-                onSuccess = { questoes ->
-                    // TODO: quando criar a QuizActivity, descomente e ajuste:
-                    // val intent = Intent(this@SelecionarMateriaActivity, QuizActivity::class.java)
-                    // intent.putExtra("materia", materia.nome)
-                    // intent.putExtra("dificuldade", dificuldade)
-                    // startActivity(intent)
-
-                    Toast.makeText(
-                        this@SelecionarMateriaActivity,
-                        "✅ ${questoes.size} questões geradas sobre ${materia.nome}!",
-                        Toast.LENGTH_LONG
-                    ).show()
-                },
-                onFailure = { erro ->
-                    Toast.makeText(
-                        this@SelecionarMateriaActivity,
-                        "❌ Erro: ${erro.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            )
-        }
-    }
-
-    /**
-     * Verifica se algum professor deixou uma orientação personalizada pendente
-     * para este aluno (tela "Enviar prompt IA" do professor) e, se houver,
-     * usa o prompt já pronto para moldar as próximas questões da Gemini.
-     */
-    private suspend fun buscarInstrucaoProfessor(): String? {
-        val token = Sessao.token(this)
-        if (token.isEmpty()) return null
-
-        return withContext(Dispatchers.IO) {
-            // O aluno é identificado pelo token: o servidor não aceita mais um
-            // id_aluno vindo do app, que permitiria consumir o prompt de outro.
-            val resposta = ApiClient.post(
-                "buscar_prompt_pendente.php",
-                mapOf("token" to token)
-            ) ?: return@withContext null
-
-            try {
-                val json = JSONObject(resposta)
-                if (json.optString("status") == "sucesso") {
-                    json.getJSONObject("prompt").getString("prompt_final")
-                } else {
-                    null
-                }
-            } catch (e: Exception) {
-                null
+            val resposta = withContext(Dispatchers.IO) {
+                ApiClient.postComStatus("listar_materias.php", mapOf("token" to Sessao.token(this@SelecionarMateriaActivity)))
+            }
+            progressBar.visibility = View.GONE
+            carregando = false
+            if (resposta.sessaoExpirada) { Sessao.encerrar(this@SelecionarMateriaActivity); finish(); return@launch }
+            val json = runCatching { JSONObject(resposta.corpo.orEmpty()) }.getOrNull()
+            if (!resposta.sucesso || json?.optString("status") != "sucesso") {
+                tvCarregando.text = resposta.mensagemErro("Não foi possível carregar as matérias.")
+                falhou = true; btnIniciar.isEnabled = true; btnIniciar.alpha = 1f; btnIniciar.text = "Tentar novamente"
+                return@launch
+            }
+            val array = json.getJSONArray("materias")
+            val materias = (0 until array.length()).map { i ->
+                val nome = array.getJSONObject(i).getString("nome")
+                MateriaItem(nome, emojiDaMateria(nome), array.getJSONObject(i).optInt("capitulos_disponiveis"))
+            }
+            tvCarregando.text = if (materias.none { it.capitulos > 0 }) "Os livros estão sendo preparados. Volte em breve." else ""
+            tvCarregando.visibility = if (materias.none { it.capitulos > 0 }) View.VISIBLE else View.GONE
+            lista.adapter = MateriaAdapter(materias) { item ->
+                materiaSelecionada = item
+                btnIniciar.isEnabled = true
+                btnIniciar.alpha = 1f
+            }
+            btnIniciar.text = "Escolher frente"
+            materias.firstOrNull { it.nome == materiaRestaurada && it.capitulos > 0 }?.let { item ->
+                materiaSelecionada = item
+                (lista.adapter as MateriaAdapter).selecionar(materias.indexOf(item))
+                btnIniciar.isEnabled = true; btnIniciar.alpha = 1f
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState); outState.putString("materia", materiaSelecionada?.nome ?: materiaRestaurada)
+    }
+
+    private fun emojiDaMateria(nome: String): String = when (nome.lowercase()) {
+        "matemática", "matematica" -> "📐"; "história", "historia" -> "📜"
+        "geografia" -> "🌍"; "ciências", "ciencias" -> "🔬"; "português", "portugues" -> "📖"
+        "inglês", "ingles" -> "🇺🇸"; "física", "fisica" -> "⚛️"; "química", "quimica" -> "🧪"
+        "biologia" -> "🧬"; "filosofia" -> "🤔"; "sociologia" -> "👥"; "redação", "redacao" -> "✍️"
+        else -> "📘"
+    }
+
+    private fun abrirFrentes() {
+        val materia = materiaSelecionada ?: return
+        startActivity(android.content.Intent(this, FrentesActivity::class.java).apply {
+            this@SelecionarMateriaActivity.intent.extras?.let { putExtras(it) }
+            putExtra("MATERIA", materia.nome)
+        })
     }
 }
