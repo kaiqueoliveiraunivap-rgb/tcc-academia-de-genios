@@ -54,7 +54,7 @@
         android:text="📊 Desempenho das turmas"
         android:textSize="15sp"
         android:textStyle="bold"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/TextoNoPrimario"
         android:backgroundTint="@color/Destaque"
         android:layout_marginBottom="20dp" />
 

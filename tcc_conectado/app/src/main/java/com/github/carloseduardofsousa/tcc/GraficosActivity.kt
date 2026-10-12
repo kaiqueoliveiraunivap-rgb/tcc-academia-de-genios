@@ -20,6 +20,7 @@ class GraficosActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_graficos)
+        NavegacaoUi.adicionarVoltar(this)
 
         progressBar    = findViewById(R.id.progressBarGraficos)
         containerLista = findViewById(R.id.containerGraficos)

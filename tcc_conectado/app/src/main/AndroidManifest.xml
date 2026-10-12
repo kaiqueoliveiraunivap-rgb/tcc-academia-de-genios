@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".AcademiaApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -36,6 +37,7 @@
         <activity android:name=".RevisaoQuizActivity" android:exported="false"/>
         <activity android:name=".FrentesActivity" android:exported="false"/>
         <activity android:name=".MenuActivity" android:exported="false"/>
+        <activity android:name=".MinhaContaActivity" android:exported="false"/>
         <activity android:name=".SelecionarRelatorioActivity" android:exported="false"/>
         <activity android:name=".DesempenhoTopicosActivity" android:exported="false"/>
 

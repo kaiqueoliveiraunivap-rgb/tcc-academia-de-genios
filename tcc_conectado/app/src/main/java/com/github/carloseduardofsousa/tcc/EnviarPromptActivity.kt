@@ -44,6 +44,7 @@ class EnviarPromptActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_enviar_prompt)
+        NavegacaoUi.adicionarVoltar(this)
 
         if (!Sessao.ehProfessor(this)) { Sessao.encerrar(this); finish(); return }
         nomeProfessor = Sessao.nome(this)
@@ -126,10 +127,10 @@ class EnviarPromptActivity : AppCompatActivity() {
                 text = "${materia.emoji}  ${materia.nome}"
                 textSize = 13f
                 setPadding(28, 18, 28, 18)
-                setTextColor(Color.parseColor("#333333"))
+                setTextColor(UiPaleta.hex("#333333"))
                 background = GradientDrawable().apply {
                     cornerRadius = 40f
-                    setColor(Color.parseColor("#F0F0F5"))
+                    setColor(UiPaleta.hex("#F0F0F5"))
                 }
                 layoutParams = ViewGroup.MarginLayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -144,11 +145,11 @@ class EnviarPromptActivity : AppCompatActivity() {
                 if (enviando) return@setOnClickListener
                 materiaSelecionada = materias[i].nome
                 chips.forEach {
-                    it.setTextColor(Color.parseColor("#333333"))
-                    (it.background as GradientDrawable).setColor(Color.parseColor("#F0F0F5"))
+                    it.setTextColor(UiPaleta.hex("#333333"))
+                    (it.background as GradientDrawable).setColor(UiPaleta.hex("#F0F0F5"))
                 }
                 chip.setTextColor(Color.WHITE)
-                (chip.background as GradientDrawable).setColor(Color.parseColor("#5C6BC0"))
+                (chip.background as GradientDrawable).setColor(UiPaleta.hex("#5C6BC0"))
                 invalidarPreview()
             }
             containerMaterias.addView(chip)

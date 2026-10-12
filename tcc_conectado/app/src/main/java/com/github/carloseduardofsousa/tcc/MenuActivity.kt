@@ -33,6 +33,7 @@ class MenuActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvPerfilMenu).text=when(perfil){
             "aluno"->"ÁREA DO ALUNO"; "professor"->"ÁREA DO PROFESSOR"; else->""
         }
+        opcao(R.drawable.ic_menu_account,"Minha conta","Veja seus dados e escolha a aparência do aplicativo") { abrir(MinhaContaActivity::class.java) }
         when(perfil){
             "aluno"->{
                 opcao(R.drawable.ic_menu_study,"Estudar","Escolha uma matéria, frente e capítulo") { abrir(SelecionarMateriaActivity::class.java) }
@@ -47,12 +48,13 @@ class MenuActivity : AppCompatActivity() {
             }
             else->{Sessao.limpar(this);voltarLogin()}
         }
+        opcao(R.drawable.ic_menu_web,"Painel da secretaria","Abrir o site de gestão escolar no navegador") { PainelSecretaria.abrir(this) }
     }
 
     private fun opcao(@DrawableRes icone:Int,titulo:String,descricao:String,click:()->Unit){
         val card=MaterialCardView(this).apply{
-            radius=dp(18).toFloat();strokeWidth=dp(1);strokeColor=Color.parseColor("#E1E3EE")
-            cardElevation=dp(1).toFloat();setCardBackgroundColor(Color.WHITE)
+            radius=dp(18).toFloat();strokeWidth=dp(1);strokeColor=UiPaleta.hex("#E1E3EE")
+            cardElevation=0f;setCardBackgroundColor(UiPaleta.superficie())
             isClickable=true;isFocusable=true;setOnClickListener{click()}
             layoutParams=LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT).apply{bottomMargin=dp(14)}
         }
@@ -61,15 +63,15 @@ class MenuActivity : AppCompatActivity() {
             setPadding(dp(16),dp(17),dp(14),dp(17))
         }
         linha.addView(ImageView(this).apply{
-            setImageResource(icone);imageTintList=ColorStateList.valueOf(Color.parseColor("#5C6BC0"))
+            setImageResource(icone);imageTintList=ColorStateList.valueOf(UiPaleta.hex("#5C6BC0"))
             background=getDrawable(R.drawable.bg_menu_icon);setPadding(dp(12),dp(12),dp(12),dp(12))
         },LinearLayout.LayoutParams(dp(50),dp(50)).apply{marginEnd=dp(14)})
         linha.addView(LinearLayout(this).apply{
             orientation=LinearLayout.VERTICAL
-            addView(TextView(this@MenuActivity).apply{text=titulo;textSize=17f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.parseColor("#1A237E"))})
-            addView(TextView(this@MenuActivity).apply{text=descricao;textSize=14f;setTextColor(Color.parseColor("#666680"));setPadding(0,dp(4),0,0)})
+            addView(TextView(this@MenuActivity).apply{text=titulo;textSize=17f;typeface=Typeface.DEFAULT_BOLD;setTextColor(UiPaleta.hex("#1A237E"))})
+            addView(TextView(this@MenuActivity).apply{text=descricao;textSize=14f;setTextColor(UiPaleta.hex("#666680"));setPadding(0,dp(4),0,0)})
         },LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f))
-        linha.addView(TextView(this).apply{text="›";textSize=30f;gravity=Gravity.CENTER;setTextColor(Color.parseColor("#9FA8DA"))},LinearLayout.LayoutParams(dp(28),dp(48)))
+        linha.addView(TextView(this).apply{text="›";textSize=30f;gravity=Gravity.CENTER;setTextColor(UiPaleta.hex("#9FA8DA"))},LinearLayout.LayoutParams(dp(28),dp(48)))
         card.addView(linha);opcoes.addView(card)
     }
 

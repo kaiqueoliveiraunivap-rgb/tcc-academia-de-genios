@@ -57,6 +57,7 @@ class   MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        NavegacaoUi.adicionarVoltar(this)
         EstudoUi.protegerBarras(findViewById(R.id.main))
 
         if (!Sessao.estaLogado(this)) { Sessao.encerrar(this); finish(); return }

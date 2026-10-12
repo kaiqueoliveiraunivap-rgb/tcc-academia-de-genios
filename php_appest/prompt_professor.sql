@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS prompt_professor (
     id_aluno      INT NULL,
     id_turma      INT NOT NULL,
     materia       VARCHAR(100) NOT NULL,
+    id_livro      INT NULL,
+    bimestre      TINYINT NULL,
     dificuldade   VARCHAR(20)  NOT NULL DEFAULT 'MEDIO',
     instrucao     TEXT NOT NULL,
     prompt_final  TEXT NOT NULL,

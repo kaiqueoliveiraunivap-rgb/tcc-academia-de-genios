@@ -8,7 +8,7 @@ if (normalizarPerfil($aluno['tipo_perfil'])!=='aluno') responderErro('Consulta e
 $materia=is_string($_POST['materia'] ?? null) ? trim($_POST['materia']) : '';
 if ($materia==='' || mb_strlen($materia)>100) responderErro('Informe a matéria.',422);
 $idTurma=turmaDoEstudo($conn,$aluno['id_usuario'],inteiroDoPost('id_turma'));
-$orientacao=orientacaoDaTurma($conn,$idTurma,$materia);
+$orientacao=orientacaoDaTurma($conn,$idTurma,$materia,inteiroDoPost('id_livro'));
 if (!$orientacao) responderJson(['status'=>'vazio']);
 $orientacao['id_prompt']=(int)$orientacao['id_prompt'];
 $orientacao['id_turma']=(int)$orientacao['id_turma'];

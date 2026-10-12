@@ -12,6 +12,7 @@
 require_once 'auth.php';
 
 exigirPost();
+responderErro('Cadastros de professores são realizados somente pela secretaria.', 403);
 
 const SENHA_MINIMA = 8;
 

@@ -17,8 +17,7 @@ Acima do e-mail e senha há as opções **Aluno** e **Professor**. Se o perfil s
 
 As contas anteriores continuam válidas no banco. O instalador também cria uma conta local por perfil, uma única vez, com senhas aleatórias. Consulte **`.runtime/acessos-locais.json`**, nesta pasta. O arquivo é privado, ignorado pelo Git e não é servido pela API. As contas administrativas entram somente no painel web da coordenação.
 
-- Aluno: botão separado **Criar conta de aluno**.
-- Professor: **Criar conta de professor**, com convite emitido pela coordenação.
+O aluno e o professor entram com as contas cadastradas pela secretaria no site. Os endpoints antigos de autocadastro retornam HTTP 403, inclusive para versões anteriores do APK.
 
 ## IA e livros
 

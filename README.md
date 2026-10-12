@@ -1,8 +1,8 @@
 # Academia de Gênios
 
-Aplicativo Android e API PHP/MySQL para estudo por capítulos de livros didáticos. O aluno escolhe matéria, frente e capítulo, lê uma explicação detalhada com subtítulos e responde a um quiz de nível médio. Seus resultados alimentam o histórico, o ranking e os gráficos. O professor acompanha as turmas e personaliza o estudo de todos os alunos de uma turma por matéria.
+Aplicativo Android e site da secretaria com API PHP/MySQL para estudo por capítulos de livros didáticos. O aluno escolhe matéria, frente e capítulo, lê uma explicação detalhada com subtítulos e responde a um quiz. Seus resultados alimentam o histórico, o ranking e os gráficos. O professor acompanha as turmas por série e pode orientar o resumo e o quiz por matéria, livro e bimestre.
 
-O aplicativo Android atende alunos e professores. A secretaria/coordenação usa um painel web separado, conectado à mesma API e ao mesmo banco, para administrar usuários, turmas e livros.
+O aplicativo Android atende alunos e professores. A secretaria usa um site separado, conectado à mesma API e ao mesmo banco, para cadastrar usuários, organizar turmas e publicar livros. Alunos e professores recebem suas contas da secretaria; não há autocadastro no app.
 
 ## Executar no emulador
 
@@ -34,12 +34,14 @@ O histórico carrega 20 tentativas por página e recicla os cartões na tela. A 
 
 Nesta instalação local, os 30 PDFs do catálogo do Drive foram preparados no banco, com 70 frentes e 337 unidades de estudo. Esses textos não fazem parte do repositório: em um clone novo, importe os PDFs uma vez com `preparar-livros-local.ps1` ou pelo painel da coordenação. Depois disso, o aluno consulta o MySQL e não espera a extração do PDF a cada acesso. Leia [BIBLIOTECA.md](BIBLIOTECA.md) para detalhes.
 
-## Estrutura
+## Onde fica cada parte
 
 ```text
-tcc_conectado/   Aplicativo Android (Kotlin/Gradle)
-php_appest/      API PHP, migrações e importadores
-biblioteca/      Catálogo dos PDFs do Drive
+tcc_conectado/             App Android (Kotlin/Gradle). Abra esta pasta no Android Studio.
+php_appest/coordenacao/     Site da secretaria (HTML, CSS e JavaScript; entrada: index.php).
+php_appest/*.php           API compartilhada pelo app e pelo site.
+php_appest/tools/          Migrações, instalador e importadores do banco.
+biblioteca/               Catálogo dos PDFs do Drive.
 ```
 
-A API pode ser hospedada separadamente do Android. A hospedagem será configurada depois da conclusão do TCC; o roteiro atual está em [HOSPEDAGEM.md](HOSPEDAGEM.md).
+O endereço local do site é `http://127.0.0.1:8088/php_appest/coordenacao/`. Para abrir o site, veja [COORDENACAO.md](COORDENACAO.md). Para rodar o app, veja [EXECUTAR.md](EXECUTAR.md). Para preparar outra máquina, use [PREPARAR_OUTRO_PC.md](PREPARAR_OUTRO_PC.md). A API pode ser hospedada separadamente do app; veja [HOSPEDAGEM.md](HOSPEDAGEM.md).

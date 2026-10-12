@@ -22,6 +22,12 @@
     <color name="ChipTexto">#333333</color>
     <color name="GradeGrafico">#EEEEF2</color>
     <color name="SetaCard">#9FA8DA</color>
+    <color name="BordaCard">#DFE3EF</color>
+    <color name="DestaqueSuave">#EBEEFB</color>
+    <color name="TextoNoPrimario">#FFFFFF</color>
+    <color name="FundoElevado">#FFFFFF</color>
+    <color name="ErroTexto">#9F2D3F</color>
+    <color name="ErroFundo">#FDEFF1</color>
 
     <!-- Paleta das séries dos gráficos com várias turmas ao mesmo tempo.
          Deriva do índigo do app para o conjunto continuar parecendo do

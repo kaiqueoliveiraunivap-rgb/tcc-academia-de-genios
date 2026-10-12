@@ -8,13 +8,13 @@ require_once 'auth.php';
 
 $professor = exigirProfessor($conn);
 
-$sql = "SELECT t.id_turma, t.nome_turma, t.ano_letivo,
+$sql = "SELECT t.id_turma, t.nome_turma, t.serie, t.ano_letivo,
                COUNT(m.id_matricula) AS total_alunos
         FROM turma t
         LEFT JOIN matricula m ON m.id_turma = t.id_turma
         WHERE t.id_professor = ?
-        GROUP BY t.id_turma, t.nome_turma, t.ano_letivo
-        ORDER BY t.ano_letivo DESC, t.nome_turma ASC";
+        GROUP BY t.id_turma, t.nome_turma, t.serie, t.ano_letivo
+        ORDER BY t.ano_letivo DESC, t.serie ASC, t.nome_turma ASC";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $professor['id_usuario']);

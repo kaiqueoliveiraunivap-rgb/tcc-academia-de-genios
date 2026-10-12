@@ -20,22 +20,26 @@ import java.util.Locale
 /** Componentes pequenos compartilhados pelas telas de histórico e revisão. */
 object EstudoUi {
     fun dp(context: Context, n: Int) = (context.resources.displayMetrics.density * n).toInt()
+    fun nomeLivro(nome: String) = nome
+        .replace(Regex("\\s*[-–]?\\s*@POLIEDRO\\d{4}\\.pdf$", RegexOption.IGNORE_CASE), "")
+        .replace(Regex("\\.pdf$", RegexOption.IGNORE_CASE), "")
+        .trim()
     fun texto(context: Context, valor: String, tamanho: Float = 16f, destaque: Boolean = false) = TextView(context).apply {
         text = valor; textSize = tamanho
-        setTextColor(Color.parseColor(if (destaque) "#1A237E" else "#37474F"))
+        setTextColor(UiPaleta.hex(if (destaque) "#1A237E" else "#37474F"))
         if (destaque) typeface = Typeface.DEFAULT_BOLD
         setLineSpacing(dp(context, 3).toFloat(), 1f)
         setPadding(0, dp(context, 5), 0, dp(context, 7))
     }
     fun botao(context: Context, titulo: String, acao: () -> Unit) = Button(context).apply {
         text = titulo; isAllCaps = false; textSize = 16f; minHeight = dp(context, 48)
-        setTextColor(Color.parseColor("#1A237E"))
-        backgroundTintList = ColorStateList.valueOf(Color.parseColor("#E8EAF6"))
+        setTextColor(UiPaleta.hex("#1A237E"))
+        backgroundTintList = ColorStateList.valueOf(UiPaleta.hex("#E8EAF6"))
         setOnClickListener { acao() }
     }
     fun coluna(context: Context) = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
     fun raiz(context: Context) = coluna(context).apply {
-        setBackgroundColor(Color.parseColor("#F5F7FA"))
+        setBackgroundColor(UiPaleta.hex("#F5F7FA"))
         val p = dp(context, 20); setPadding(p, p, p, p)
         protegerBarras(this)
     }
@@ -54,8 +58,8 @@ object EstudoUi {
     fun cartao(context: Context) = coluna(context).apply {
         val p = dp(context, 16); setPadding(p, p, p, p)
         background = GradientDrawable().apply {
-            setColor(Color.WHITE); cornerRadius = dp(context, 16).toFloat()
-            setStroke(dp(context, 1), Color.parseColor("#E1E3EE"))
+            setColor(UiPaleta.superficie()); cornerRadius = dp(context, 16).toFloat()
+            setStroke(dp(context, 1), UiPaleta.hex("#E1E3EE"))
         }
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(context, 12) }
     }

@@ -18,7 +18,7 @@ As próximas contas podem ser criadas em **Equipe da secretaria**. Não existe c
 
 ## Uso
 
-1. Cadastre os **professores** e crie as **turmas**, informando série, ano e professor responsável.
+1. Cadastre os **professores** e crie as **turmas**, informando a série e a letra (A, B, C etc.) em campos separados, além do ano e professor responsável. O nome visto no app é montado como `1ª série A`.
 2. Cadastre os **alunos**, marcando suas turmas. O login e os vínculos já ficam disponíveis para o aplicativo.
 3. Use **Editar** para atualizar dados ou definir uma nova senha. Senha em branco durante a edição mantém a anterior; não apaga a senha. A alteração encerra as sessões abertas do usuário.
 4. **Excluir acesso** é uma exclusão lógica: bloqueia o login e remove o cadastro das listagens ativas, preservando o histórico escolar. O e-mail continua reservado. Professores com turmas devem ter as turmas transferidas antes da exclusão. A própria conta não pode ser excluída por ela mesma.

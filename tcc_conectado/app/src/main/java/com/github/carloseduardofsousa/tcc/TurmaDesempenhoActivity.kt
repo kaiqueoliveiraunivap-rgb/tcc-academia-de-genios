@@ -43,12 +43,12 @@ class AlunoDesempenhoAdapter(
 
         val tvNome = TextView(ctx).apply {
             textSize = 16f
-            setTextColor(Color.parseColor("#1A1A2E"))
+            setTextColor(UiPaleta.hex("#1A1A2E"))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
         }
         val tvInfo = TextView(ctx).apply {
             textSize = 13f
-            setTextColor(Color.parseColor("#666680"))
+            setTextColor(UiPaleta.hex("#666680"))
             setPadding(0, 4, 0, 0)
         }
         val textos = LinearLayout(ctx).apply {
@@ -68,7 +68,7 @@ class AlunoDesempenhoAdapter(
             ).apply { setMargins(0, 0, 0, 12) }
             background = GradientDrawable().apply {
                 cornerRadius = 16f
-                setColor(Color.WHITE)
+                setColor(UiPaleta.superficie())
             }
             addView(textos)
 
@@ -106,6 +106,7 @@ class TurmaDesempenhoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_turma_desempenho)
+        NavegacaoUi.adicionarVoltar(this)
 
         progressBar = findViewById(R.id.progressBarDesempenho)
         txtTitulo   = findViewById(R.id.txtTituloTurma)
@@ -182,8 +183,8 @@ class TurmaDesempenhoActivity : AppCompatActivity() {
         val primeirosNomes = alunos.map { it.nome.trim().split(" ").first() }
 
         val dataSet = BarDataSet(entries, "Pontos acumulados").apply {
-            color = Color.parseColor("#5C6BC0")
-            valueTextColor = Color.parseColor("#333333")
+            color = UiPaleta.hex("#5C6BC0")
+            valueTextColor = UiPaleta.hex("#333333")
             valueTextSize = 11f
         }
 
@@ -202,14 +203,14 @@ class TurmaDesempenhoActivity : AppCompatActivity() {
                 valueFormatter = IndexAxisValueFormatter(primeirosNomes)
                 granularity = 1f
                 setDrawGridLines(false)
-                textColor = Color.parseColor("#666680")
+                textColor = UiPaleta.hex("#666680")
                 labelRotationAngle = if (alunos.size > 4) -30f else 0f
             }
             axisLeft.apply {
                 axisMinimum = 0f
                 setDrawGridLines(true)
-                gridColor = Color.parseColor("#EEEEF2")
-                textColor = Color.parseColor("#666680")
+                gridColor = UiPaleta.hex("#EEEEF2")
+                textColor = UiPaleta.hex("#666680")
             }
             axisRight.isEnabled = false
 

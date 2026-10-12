@@ -40,7 +40,7 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
         val raiz = findViewById<View>(R.id.loginScroll)
         EstudoUi.protegerBarras(raiz, incluirTeclado = true)
-        WindowCompat.getInsetsController(window, raiz).isAppearanceLightStatusBars = true
+        WindowCompat.getInsetsController(window, raiz).isAppearanceLightStatusBars = !TemaApp.escuro()
 
         etEmail    = findViewById(R.id.etEmail)
         etSenha    = findViewById(R.id.etSenha)
@@ -68,6 +68,7 @@ class LoginActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnIrCadastroProfessor).setOnClickListener {
             startActivity(Intent(this, CadastroProfessorActivity::class.java).putExtra("PERFIL_CADASTRO", perfil))
         }
+        findViewById<Button>(R.id.btnPainelSecretaria).setOnClickListener { PainelSecretaria.abrir(this) }
     }
 
     private fun atualizarPerfil() {
@@ -77,9 +78,9 @@ class LoginActivity : AppCompatActivity() {
         ).forEach { (botao, tipo) ->
             val selecionado = perfil == tipo
             botao.backgroundTintList = ColorStateList.valueOf(
-                if (selecionado) Color.parseColor("#5C6BC0") else Color.parseColor("#EEEEEE")
+                if (selecionado) UiPaleta.hex("#5C6BC0") else UiPaleta.hex("#EEEEEE")
             )
-            botao.setTextColor(if (selecionado) Color.WHITE else Color.parseColor("#555555"))
+            botao.setTextColor(if (selecionado) Color.WHITE else UiPaleta.hex("#555555"))
         }
         btnEntrar.text = "Entrar como $perfil"
         cadastro.text = "Criar conta de $perfil"

@@ -10,7 +10,7 @@ header('Referrer-Policy: no-referrer');
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#242457"><title>Coordenação · Academia de Gênios</title>
-  <link rel="stylesheet" href="painel.css?v=1"><script src="painel.js?v=1" defer></script>
+  <link rel="stylesheet" href="painel.css?v=2"><script src="painel.js?v=2" defer></script>
 </head>
 <body>
 <div id="inicial" class="carregando" role="status">Abrindo a Academia de Gênios…</div>
@@ -37,13 +37,13 @@ header('Referrer-Policy: no-referrer');
     <a class="marca" href="#inicio"><span class="simbolo" aria-hidden="true">AG</span><span>Academia<br>de Gênios</span></a>
     <span class="rotulo-nav">GESTÃO DA ESCOLA</span>
     <nav aria-label="Menu principal">
-      <button data-page="inicio">Visão geral</button><button data-page="aluno">Alunos</button><button data-page="professor">Professores</button><button data-page="turmas">Turmas</button><button data-page="livros">Biblioteca</button><button data-page="admin">Equipe da secretaria</button>
+      <button data-page="inicio">Visão geral</button><button data-page="aluno">Alunos</button><button data-page="professor">Professores</button><button data-page="turmas">Turmas</button><button data-page="livros">Biblioteca</button><button data-page="admin">Equipe da secretaria</button><button data-page="configuracoes">Configurações</button>
     </nav>
     <div class="sidebar-rodape"><span class="status-dot"></span> Conectado ao banco do app<p>Os cadastros ficam disponíveis no aplicativo após salvar.</p></div>
     <button id="sair" class="sair">Sair da conta <span aria-hidden="true">↗</span></button>
   </aside>
   <div class="principal">
-    <header class="topbar"><span>PAINEL ESCOLAR <span class="separador">/</span> <span id="local-atual">Visão geral</span></span><button id="minha-conta" class="conta"><span class="avatar" id="avatar">C</span><span id="nome-conta"></span></button></header>
+    <header class="topbar"><span>PAINEL ESCOLAR <span class="separador">/</span> <span id="local-atual">Visão geral</span></span><button id="minha-conta" class="conta" type="button" aria-label="Abrir minha conta" aria-haspopup="dialog"><span class="avatar" id="avatar"><span id="avatar-iniciais">C</span><img id="avatar-foto" alt="" hidden></span><span id="nome-conta"></span><span aria-hidden="true">⌄</span></button></header>
     <main id="conteudo" tabindex="-1" aria-busy="false"></main>
     <footer>Academia de Gênios <span>Coordenação & secretaria</span></footer>
   </div>

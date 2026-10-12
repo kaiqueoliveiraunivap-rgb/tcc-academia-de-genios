@@ -4,27 +4,27 @@
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:fillViewport="true" android:background="@color/BackGround">
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="vertical" android:padding="24dp" android:gravity="center_horizontal">
+        android:orientation="vertical" android:padding="24dp" android:paddingTop="48dp" android:gravity="center_horizontal">
         <TextView android:id="@+id/txtTitulo" android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="RESULTADO" android:textSize="16sp" android:textStyle="bold" android:textColor="@color/BordaButton"/>
+            android:text="SEU RESULTADO" android:textSize="12sp" android:letterSpacing="0.12" android:textStyle="bold" android:textColor="@color/Destaque"/>
         <TextView android:id="@+id/txtPlacar" android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="0 / 0" android:textSize="64sp" android:textStyle="bold" android:textColor="@color/btnSelecionado"/>
         <TextView android:id="@+id/txtMensagem" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Muito bem!" android:textSize="22sp" android:gravity="center" android:textColor="@color/BordaButton" android:layout_marginBottom="24dp"/>
+            android:text="Muito bem!" android:textSize="22sp" android:gravity="center" android:textColor="@color/BordaButton" android:layout_marginBottom="28dp"/>
         <Button android:id="@+id/btnRevisar" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Revisar minhas respostas" android:textAllCaps="false" android:textSize="16sp" android:minHeight="48dp"
-            android:padding="12dp" android:backgroundTint="@color/btnSelecionado" android:textColor="#FFFFFF"/>
+            android:padding="12dp" android:backgroundTint="@color/btnSelecionado" android:textColor="@color/TextoNoPrimario" android:layout_marginBottom="12dp"/>
         <Button android:id="@+id/btnHistorico" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Ver meu histórico" android:textAllCaps="false" android:textSize="16sp" android:minHeight="48dp"
-            android:padding="12dp" android:backgroundTint="#E8EAF6" android:textColor="@color/btnSelecionado"/>
+            android:padding="12dp" android:backgroundTint="@color/DestaqueSuave" android:textColor="@color/btnSelecionado" android:layout_marginBottom="10dp"/>
         <Button android:id="@+id/btnRanking" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Ver ranking mensal" android:textAllCaps="false" android:textSize="16sp" android:minHeight="48dp"
-            android:padding="12dp" android:backgroundTint="#E8EAF6" android:textColor="@color/btnSelecionado"/>
+            android:padding="12dp" android:backgroundTint="@color/DestaqueSuave" android:textColor="@color/btnSelecionado" android:layout_marginBottom="10dp"/>
         <Button android:id="@+id/btnGraficos" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Ver meus gráficos" android:textAllCaps="false" android:textSize="16sp" android:minHeight="48dp"
-            android:padding="12dp" android:backgroundTint="#E8EAF6" android:textColor="@color/btnSelecionado"/>
+            android:padding="12dp" android:backgroundTint="@color/DestaqueSuave" android:textColor="@color/btnSelecionado" android:layout_marginBottom="10dp"/>
         <Button android:id="@+id/btnMenu" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Voltar ao menu" android:textAllCaps="false" android:textSize="16sp" android:minHeight="48dp"
-            android:padding="12dp" android:backgroundTint="#E8EAF6" android:textColor="@color/btnSelecionado"/>
+            android:padding="12dp" android:backgroundTint="@color/DestaqueSuave" android:textColor="@color/btnSelecionado" android:layout_marginBottom="10dp"/>
     </LinearLayout>
 </ScrollView>

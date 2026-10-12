@@ -34,11 +34,17 @@ try {
         cq('DELETE FROM coordenacao_sessao WHERE token_hash=?',[hash('sha256',(string)($_COOKIE['academia_coord'] ?? ''))]);
         cq('INSERT INTO coordenacao_sessao(token_hash,id_usuario,csrf,expira_em,ultimo_acesso) VALUES (?,?,?,DATE_ADD(NOW(),INTERVAL 8 HOUR),NOW())',[hash('sha256',$token),$u['id_usuario'],$csrf]);
         cookieCoord($token,time()+28800); auditar((int)$u['id_usuario'],'login');
-        resposta(['usuario'=>array_intersect_key($u,array_flip(['id_usuario','nome','email'])),'csrf'=>$csrf]);
+        resposta(['usuario'=>array_intersect_key($u,array_flip(['id_usuario','nome','email']))+['foto'=>tipoFotoPerfil(caminhoFotoPerfil((int)$u['id_usuario']))!==null],'csrf'=>$csrf]);
     }
     $sessao=sessaoCoord(); $autor=(int)$sessao['id_usuario'];
     if ($metodo==='GET') {
-        if ($acao==='sessao') resposta(['usuario'=>array_intersect_key($sessao,array_flip(['id_usuario','nome','email'])),'csrf'=>$sessao['csrf']]);
+        if ($acao==='sessao') resposta(['usuario'=>array_intersect_key($sessao,array_flip(['id_usuario','nome','email']))+['foto'=>tipoFotoPerfil(caminhoFotoPerfil($autor))!==null],'csrf'=>$sessao['csrf']]);
+        if ($acao==='minha_foto') {
+            $arquivo=caminhoFotoPerfil($autor); $tipo=tipoFotoPerfil($arquivo);
+            if ($tipo===null) falha('Foto não encontrada.',404);
+            header('Content-Type: '.$tipo); header('Content-Length: '.filesize($arquivo));
+            readfile($arquivo); exit;
+        }
         if ($acao==='inicio') resposta([
             'contagens'=>linhas('SELECT LOWER(tipo_perfil) AS perfil,COUNT(*) AS total FROM usuario WHERE excluido_em IS NULL GROUP BY LOWER(tipo_perfil)'),
             'livros'=>linhas('SELECT COUNT(*) AS total FROM livro_didatico WHERE ativo=1')[0]['total'],
@@ -53,7 +59,15 @@ try {
             $where="FROM usuario u WHERE u.excluido_em IS NULL AND $cond AND (u.nome LIKE ? OR u.email LIKE ?)";
             resposta(['total'=>linhas('SELECT COUNT(*) AS n '.$where,$args)[0]['n'],'itens'=>linhas("SELECT u.id_usuario,u.nome,u.email,LOWER(u.tipo_perfil) AS perfil,(SELECT GROUP_CONCAT(m.id_turma) FROM matricula m WHERE m.id_aluno=u.id_usuario) AS turmas $where ORDER BY u.nome,u.id_usuario LIMIT 30 OFFSET $offset",$args)]);
         }
-        if ($acao==='turmas') resposta(['itens'=>linhas('SELECT t.id_turma,t.nome_turma,t.serie,t.ano_letivo,t.id_professor,u.nome AS professor FROM turma t JOIN usuario u ON u.id_usuario=t.id_professor ORDER BY t.ano_letivo DESC,t.serie,t.nome_turma'),'professores'=>linhas("SELECT id_usuario,nome FROM usuario WHERE LOWER(tipo_perfil)='professor' AND excluido_em IS NULL ORDER BY nome")]);
+        if ($acao==='turmas') {
+            $itens=linhas('SELECT t.id_turma,t.nome_turma,t.serie,t.ano_letivo,t.id_professor,u.nome AS professor FROM turma t JOIN usuario u ON u.id_usuario=t.id_professor ORDER BY t.ano_letivo DESC,t.serie,t.nome_turma');
+            foreach ($itens as &$turma) {
+                preg_match('/(?:^|\s)([A-Z])$/u',trim($turma['nome_turma']),$letra);
+                $turma['letra']=$letra[1] ?? '';
+            }
+            unset($turma);
+            resposta(['itens'=>$itens,'professores'=>linhas("SELECT id_usuario,nome FROM usuario WHERE LOWER(tipo_perfil)='professor' AND excluido_em IS NULL ORDER BY nome")]);
+        }
         if ($acao==='livros') {
             $pendentes=linhas("SELECT id,titulo,materia,estado,mensagem,criado_em FROM coordenacao_livro WHERE estado<>'pronto' ORDER BY id DESC LIMIT 100");
             foreach ($pendentes as $p) if (in_array($p['estado'],['fila','processando'],true)) {
@@ -69,6 +83,21 @@ try {
     if (!hash_equals($sessao['csrf'],(string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''))) falha('Atualize a página antes de continuar.',403);
     if ($acao==='logout') {
         cq('DELETE FROM coordenacao_sessao WHERE token_hash=?',[$sessao['token_hash']]); cookieCoord('',time()-3600); resposta(['ok'=>true]);
+    }
+    if ($acao==='foto_perfil') {
+        $foto=$_FILES['foto'] ?? null;
+        if (!is_array($foto) || ($foto['error'] ?? UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK) falha('Selecione uma foto válida.');
+        if ($foto['size']<1 || $foto['size']>2097152 || !is_uploaded_file($foto['tmp_name'])) falha('A foto deve ter até 2 MB.');
+        $tipo=(new finfo(FILEINFO_MIME_TYPE))->file($foto['tmp_name']);
+        $dim=@getimagesize($foto['tmp_name']);
+        if (!in_array($tipo,['image/jpeg','image/png','image/webp'],true) || !$dim || $dim[0]<1 || $dim[1]<1 || $dim[0]>2048 || $dim[1]>2048) falha('Use uma foto JPG, PNG ou WebP de até 2048 × 2048 pixels.');
+        if (!move_uploaded_file($foto['tmp_name'],caminhoFotoPerfil($autor))) throw new RuntimeException('Não foi possível salvar a foto.');
+        auditar($autor,'foto_perfil',$autor); resposta(['ok'=>true]);
+    }
+    if ($acao==='remover_foto') {
+        $arquivo=caminhoFotoPerfil($autor);
+        if (is_file($arquivo) && !unlink($arquivo)) throw new RuntimeException('Não foi possível remover a foto.');
+        auditar($autor,'remover_foto',$autor); resposta(['ok'=>true]);
     }
     // Serializa alterações administrativas; impede exclusões concorrentes dos últimos administradores.
     $lock='coord-'.configuracao('DB_NAME','appest');
@@ -102,7 +131,13 @@ try {
         if ($confirmar) foreach ($contas as $c) salvarConta($c,$autor);
         $resultado=['ok'=>true,'total'=>count($contas),'importado'=>$confirmar,'previa'=>array_map(fn($c)=>array_intersect_key($c,array_flip(['nome','email','perfil','turmas'])),array_slice($contas,0,10))];
     } elseif ($acao==='salvar_turma') {
-        $nome=campo($dados,'nome_turma',80); $serie=campo($dados,'serie',40); $ano=campo($dados,'ano_letivo',10); $prof=(int)($dados['id_professor'] ?? 0); $id=(int)($dados['id'] ?? 0);
+        $serie=campo($dados,'serie',40); $ano=campo($dados,'ano_letivo',10); $prof=(int)($dados['id_professor'] ?? 0); $id=(int)($dados['id'] ?? 0);
+        $letra=mb_strtoupper(trim((string)($dados['letra'] ?? '')));
+        // Formulários antigos ainda enviam nome_turma; recupera só a letra.
+        if ($letra==='' && preg_match('/(?:^|\s)([A-Z])$/u',trim((string)($dados['nome_turma'] ?? '')),$antiga)) $letra=$antiga[1];
+        if (!preg_match('/^[A-Z]$/D',$letra)) falha('Escolha uma letra de turma entre A e Z.');
+        $nome=$serie.' '.$letra;
+        if (mb_strlen($nome)>80) falha('O nome da turma ficou muito longo.');
         if (!linhas("SELECT id_usuario FROM usuario WHERE id_usuario=? AND LOWER(tipo_perfil)='professor' AND excluido_em IS NULL",[$prof])) falha('Selecione um professor ativo.');
         if ($id) {
             if (!linhas('SELECT id_turma FROM turma WHERE id_turma=?',[$id])) falha('Turma não encontrada.',404);

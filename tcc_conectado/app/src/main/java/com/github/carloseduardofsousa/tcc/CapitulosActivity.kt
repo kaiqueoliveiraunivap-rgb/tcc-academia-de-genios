@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,6 +26,7 @@ class CapitulosActivity : AppCompatActivity() {
     private lateinit var status: TextView
     private lateinit var progresso: ProgressBar
     private var estudo: String? = null
+    private var leitura: String? = null
     private var ocupado = false
     private lateinit var preparacao: PrepararEstudoModel
     private var versaoProgresso = ProgressoAluno.versao
@@ -38,19 +40,19 @@ class CapitulosActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             val p = dp(20)
             setPadding(p,p,p,p)
-            setBackgroundColor(Color.parseColor("#F5F7FA"))
+            setBackgroundColor(UiPaleta.hex("#F5F7FA"))
         }
-        root.addView(Button(this).apply { text = "← Voltar"; isAllCaps = false; setOnClickListener { finish() } })
+        root.addView(TextView(this).apply { text="‹  Voltar"; textSize=16f; setTextColor(getColor(R.color.Destaque)); minHeight=EstudoUi.dp(this@CapitulosActivity,48); gravity=android.view.Gravity.CENTER_VERTICAL; setOnClickListener { finish() } })
         root.addView(TextView(this).apply {
             text = intent.getStringExtra("FRENTE") ?: "Capítulos"
             textSize = 26f; typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#1A237E")); setPadding(0,dp(18),0,dp(4))
+            setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,dp(18),0,dp(4))
         })
         root.addView(TextView(this).apply {
             text = intent.getStringExtra("MATERIA").orEmpty()
-            textSize = 15f; setTextColor(Color.parseColor("#666680"))
+            textSize = 15f; setTextColor(UiPaleta.hex("#666680"))
         })
-        status = TextView(this).apply { textSize = 16f; setTextColor(Color.parseColor("#455A64")); setPadding(0,dp(16),0,dp(10)) }
+        status = TextView(this).apply { textSize = 16f; setTextColor(UiPaleta.hex("#455A64")); setPadding(0,dp(16),0,dp(10)) }
         root.addView(status)
         progresso = ProgressBar(this)
         root.addView(progresso)
@@ -59,14 +61,16 @@ class CapitulosActivity : AppCompatActivity() {
         EstudoUi.protegerBarras(root)
         setContentView(root)
         estudo = savedInstanceState?.getString("estudo")
+        leitura = savedInstanceState?.getString("leitura")
         val abrir = intent.getIntExtra("ID_CAPITULO_ABRIR", 0)
         if (estudo != null) mostrarEstudo(JSONObject(estudo!!))
+        else if (leitura != null) mostrarLeitura(JSONObject(leitura!!))
         else if (preparacao.estado.value.idCapitulo > 0) { /* A geração continua ao girar a tela. */ }
         else if (savedInstanceState != null && savedInstanceState.getInt("capitulo_pendente", 0) > 0) {
             mostrarFalhaGeracao(savedInstanceState.getInt("capitulo_pendente"), savedInstanceState.getString("titulo_pendente").orEmpty(), "A preparação foi interrompida. Toque em tentar novamente para continuar neste capítulo.")
         } else if (abrir > 0) {
             intent.removeExtra("ID_CAPITULO_ABRIR")
-            gerar(abrir, intent.getStringExtra("CAPITULO_ABRIR").orEmpty())
+            lerCapitulo(abrir)
         } else carregar()
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -94,6 +98,7 @@ class CapitulosActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putString("estudo", estudo)
+        outState.putString("leitura", leitura)
         outState.putInt("capitulo_pendente", preparacao.estado.value.idCapitulo)
         outState.putString("titulo_pendente", preparacao.estado.value.titulo)
     }
@@ -156,35 +161,116 @@ class CapitulosActivity : AppCompatActivity() {
             }, LinearLayout.LayoutParams(-1, dp(12)).apply { bottomMargin = dp(12) })
             for (i in 0 until capitulos.length()) {
                 val c = capitulos.getJSONObject(i)
-                lista.addView(Button(this).apply {
-                    text = c.getString("titulo") + if (c.optBoolean("concluido")) "\n✓ Concluído · melhor resultado: ${c.optDouble("melhor_percentual").toInt()}%" else "\nAinda não concluído"
-                    isAllCaps = false
-                    textSize = 16f
-                    minHeight = dp(64)
-                    textAlignment = View.TEXT_ALIGNMENT_TEXT_START
-                    setPadding(dp(18),dp(12),dp(18),dp(12))
-                    backgroundTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
-                    setTextColor(Color.parseColor("#1A237E"))
-                    layoutParams = LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(10)) }
-                    setOnClickListener {
-                        if (!ocupado) gerar(c.getInt("id_capitulo"), c.getString("titulo"))
-                    }
+                lista.addView(MaterialCardView(this).apply {
+                    radius = dp(16).toFloat()
+                    strokeWidth = dp(1)
+                    strokeColor = UiPaleta.hex("#E1E3EE")
+                    cardElevation = 0f
+                    setCardBackgroundColor(UiPaleta.superficie())
+                    layoutParams = LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(12)) }
+                    addView(LinearLayout(this@CapitulosActivity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(dp(18),dp(17),dp(18),dp(17))
+                        addView(TextView(this@CapitulosActivity).apply {
+                            text = c.getString("titulo")
+                            textSize = 17f
+                            typeface = Typeface.DEFAULT_BOLD
+                            setTextColor(UiPaleta.hex("#1A237E"))
+                        })
+                        addView(TextView(this@CapitulosActivity).apply {
+                            text = if (c.optBoolean("concluido")) "✓ Concluído · melhor resultado: ${c.optDouble("melhor_percentual").toInt()}%" else "Toque para estudar · ainda não concluído"
+                            textSize = 14f
+                            setTextColor(UiPaleta.hex("#666680"))
+                            setPadding(0,dp(6),0,0)
+                        })
+                    })
+                    setOnClickListener { if (!ocupado) lerCapitulo(c.getInt("id_capitulo")) }
+                    isClickable = true
+                    isFocusable = true
                 })
             }
         }
+    }
+
+    private fun lerCapitulo(id: Int) {
+        status.text = "Abrindo páginas do livro…"
+        requisitar("ler_capitulo.php", mapOf("id_capitulo" to id.toString())) { json ->
+            leitura = json.toString()
+            mostrarLeitura(json)
+        }
+    }
+
+    private fun mostrarLeitura(json: JSONObject) {
+        progresso.visibility = View.GONE
+        lista.removeAllViews()
+        status.text = "${EstudoUi.nomeLivro(json.getString("livro"))}\nTexto original do capítulo"
+        val paginas = json.getJSONArray("paginas")
+        lista.addView(TextView(this).apply {
+            text = "${json.getString("capitulo")} · ${paginas.length()} páginas"
+            textSize = 21f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(UiPaleta.hex("#1A237E"))
+            setPadding(0,dp(12),0,dp(18))
+        })
+        for (i in 0 until paginas.length()) {
+            val pagina = paginas.getJSONObject(i)
+            lista.addView(LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(18),dp(18),dp(18),dp(18))
+                background = GradientDrawable().apply {
+                    setColor(UiPaleta.superficie())
+                    cornerRadius = dp(16).toFloat()
+                    setStroke(dp(1),UiPaleta.hex("#E1E3EE"))
+                }
+                layoutParams = LinearLayout.LayoutParams(-1,-2).apply { bottomMargin = dp(12) }
+                addView(TextView(this@CapitulosActivity).apply {
+                    text = "PÁGINA ${pagina.optInt("pagina")}"
+                    textSize = 12f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(getColor(R.color.Destaque))
+                    setPadding(0,0,0,dp(10))
+                })
+                addView(TextView(this@CapitulosActivity).apply {
+                    text = pagina.optString("texto").trim()
+                    textSize = 16f
+                    setTextColor(UiPaleta.hex("#1A1A2E"))
+                    setLineSpacing(dp(5).toFloat(),1f)
+                    setTextIsSelectable(true)
+                })
+            })
+        }
+        if (json.optBoolean("ia_disponivel")) {
+            lista.addView(EstudoUi.botao(this,"Preparar explicação e quiz com IA") {
+                leitura = null
+                gerar(json.getInt("id_capitulo"), json.getString("capitulo"))
+            })
+        } else {
+            lista.addView(TextView(this).apply {
+                text = "O quiz será liberado quando a escola ativar a geração de questões. Você já pode ler o capítulo completo acima."
+                textSize = 15f
+                setTextColor(UiPaleta.hex("#666680"))
+                setPadding(0,dp(12),0,dp(18))
+            })
+        }
+        lista.addView(EstudoUi.botao(this,"Abrir PDF original") {
+            runCatching {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(json.getString("fonte_url"))))
+            }.onFailure { Toast.makeText(this,"Nenhum navegador disponível",Toast.LENGTH_SHORT).show() }
+        })
+        lista.addView(EstudoUi.botao(this,"Escolher outro capítulo") { leitura = null; carregar() })
     }
 
     private fun mostrarEstudo(json: JSONObject) {
         intent.putExtra("ID_TURMA", json.optInt("id_turma", Sessao.idTurma(this)))
         progresso.visibility = View.GONE
         lista.removeAllViews()
-        status.text = "${json.getString("livro")}\n${json.getString("capitulo")}"
+        status.text = "${EstudoUi.nomeLivro(json.getString("livro"))}\n${json.getString("capitulo")}"
         val dados = json.getJSONObject("estudo")
         val resumo = dados.getJSONArray("resumo")
         lista.addView(TextView(this).apply {
             text = "Explicação do capítulo"
             textSize = 22f; typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#1A237E")); setPadding(0,dp(12),0,dp(12))
+            setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,dp(12),0,dp(12))
         })
         for (i in 0 until resumo.length()) {
             val p = resumo.getJSONObject(i)
@@ -192,17 +278,17 @@ class CapitulosActivity : AppCompatActivity() {
                 orientation = LinearLayout.VERTICAL
                 setPadding(dp(18),dp(18),dp(18),dp(16))
                 background = GradientDrawable().apply {
-                    setColor(Color.WHITE); cornerRadius = dp(16).toFloat()
-                    setStroke(dp(1),Color.parseColor("#E4E6F2"))
+                    setColor(UiPaleta.superficie()); cornerRadius = dp(16).toFloat()
+                    setStroke(dp(1),UiPaleta.hex("#E4E6F2"))
                 }
                 layoutParams = LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(12)) }
                 if (p.optString("titulo").isNotBlank()) addView(TextView(this@CapitulosActivity).apply {
                     text = p.getString("titulo"); textSize = 19f; typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(Color.parseColor("#1A237E")); setPadding(0,0,0,dp(10))
+                    setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,0,0,dp(10))
                 })
                 addView(TextView(this@CapitulosActivity).apply {
                     text = p.getString("texto").trim()
-                    textSize = 17f; setTextColor(Color.parseColor("#1A1A2E"))
+                    textSize = 17f; setTextColor(UiPaleta.hex("#1A1A2E"))
                     setLineSpacing(dp(5).toFloat(),1f); setTextIsSelectable(true)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) justificationMode = Layout.JUSTIFICATION_MODE_INTER_WORD
                 })
@@ -211,18 +297,18 @@ class CapitulosActivity : AppCompatActivity() {
                     addView(LinearLayout(this@CapitulosActivity).apply {
                         orientation = LinearLayout.HORIZONTAL; setPadding(0,dp(10),0,0)
                         addView(TextView(this@CapitulosActivity).apply {
-                            text = "•"; textSize = 18f; setTextColor(Color.parseColor("#5C6BC0"))
+                            text = "•"; textSize = 18f; setTextColor(UiPaleta.hex("#5C6BC0"))
                         }, LinearLayout.LayoutParams(dp(20),-2))
                         addView(TextView(this@CapitulosActivity).apply {
                             text = topicos.getString(j); textSize = 17f
-                            setTextColor(Color.parseColor("#1A1A2E")); setLineSpacing(dp(4).toFloat(),1f)
+                            setTextColor(UiPaleta.hex("#1A1A2E")); setLineSpacing(dp(4).toFloat(),1f)
                             setTextIsSelectable(true)
                         }, LinearLayout.LayoutParams(0,-2,1f))
                     })
                 }
                 addView(TextView(this@CapitulosActivity).apply {
                     text = "Fonte: página ${p.getInt("pagina")} do livro"
-                    textSize = 13f; setTextColor(Color.parseColor("#5C6BC0"))
+                    textSize = 13f; setTextColor(UiPaleta.hex("#5C6BC0"))
                     setPadding(0,dp(12),0,0)
                 })
             })
@@ -231,15 +317,15 @@ class CapitulosActivity : AppCompatActivity() {
         if (palavrasChave != null && palavrasChave.length() > 0) {
             lista.addView(LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
-                background = GradientDrawable().apply { setColor(Color.parseColor("#E8EAF6")); cornerRadius = dp(16).toFloat() }
+                background = GradientDrawable().apply { setColor(UiPaleta.hex("#E8EAF6")); cornerRadius = dp(16).toFloat() }
                 layoutParams = LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(16)) }
                 addView(TextView(this@CapitulosActivity).apply {
                     text = "Palavras-chave do capítulo"; textSize = 20f; typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(Color.parseColor("#1A237E")); setPadding(0,0,0,dp(10))
+                    setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,0,0,dp(10))
                 })
                 addView(TextView(this@CapitulosActivity).apply {
                     text = (0 until palavrasChave.length()).joinToString("  •  ") { palavrasChave.getString(it) }
-                    textSize = 16f; setTextColor(Color.parseColor("#303F9F")); setLineSpacing(dp(6).toFloat(),1f)
+                    textSize = 16f; setTextColor(UiPaleta.hex("#303F9F")); setLineSpacing(dp(6).toFloat(),1f)
                     setTextIsSelectable(true)
                 })
             })
@@ -247,7 +333,7 @@ class CapitulosActivity : AppCompatActivity() {
         lista.addView(Button(this).apply {
             text = "Iniciar quiz — 5 questões"
             isAllCaps = false
-            backgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#5C6BC0"))
+            backgroundTintList = android.content.res.ColorStateList.valueOf(UiPaleta.hex("#5C6BC0"))
             setTextColor(Color.WHITE)
             setOnClickListener {
                 startActivity(Intent(this@CapitulosActivity, MainActivity::class.java).apply {

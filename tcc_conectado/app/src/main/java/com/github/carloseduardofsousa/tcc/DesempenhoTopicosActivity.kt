@@ -55,29 +55,29 @@ class DesempenhoTopicosActivity : AppCompatActivity() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             setPadding(dp(20),dp(20),dp(20),dp(12))
-            setBackgroundColor(Color.parseColor("#F5F7FA"))
+            setBackgroundColor(UiPaleta.hex("#F5F7FA"))
         }
         root.addView(Button(this).apply {
             text="← Voltar"; isAllCaps=false
-            backgroundTintList=ColorStateList.valueOf(Color.WHITE)
-            setTextColor(Color.parseColor("#1A237E"))
+            backgroundTintList=ColorStateList.valueOf(UiPaleta.superficie())
+            setTextColor(UiPaleta.hex("#1A237E"))
             setOnClickListener { finish() }
         })
         root.addView(TextView(this).apply {
             text=if (detalhado) materia else if (Sessao.ehProfessor(this@DesempenhoTopicosActivity)) "Desempenho da turma" else "Meu desempenho"
             textSize=27f; typeface=Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#1A237E")); setPadding(0,dp(18),0,dp(4))
+            setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,dp(18),0,dp(4))
         })
         root.addView(TextView(this).apply {
             text=if (Sessao.ehProfessor(this@DesempenhoTopicosActivity))
                 intent.getStringExtra("NOME_TURMA").orEmpty()
             else Sessao.nome(this@DesempenhoTopicosActivity)
-            textSize=16f; setTextColor(Color.parseColor("#666680"))
+            textSize=16f; setTextColor(UiPaleta.hex("#666680"))
         })
         progresso=ProgressBar(this).also { root.addView(it) }
         status=TextView(this).apply {
             text="Carregando os resultados dos quizzes…"; textSize=15f
-            setTextColor(Color.parseColor("#455A64")); setPadding(0,dp(12),0,dp(12))
+            setTextColor(UiPaleta.hex("#455A64")); setPadding(0,dp(12),0,dp(12))
         }
         root.addView(status)
         conteudo=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
@@ -149,7 +149,7 @@ class DesempenhoTopicosActivity : AppCompatActivity() {
             setUsePercentValues(false); setDrawEntryLabels(false)
             isRotationEnabled=true; isHighlightPerTapEnabled=true
             holeRadius=57f; transparentCircleRadius=62f
-            setHoleColor(Color.WHITE); setCenterTextColor(Color.parseColor("#1A237E"))
+            setHoleColor(UiPaleta.superficie()); setCenterTextColor(UiPaleta.hex("#1A237E"))
             setCenterTextSize(19f); centerText=String.format(Locale.forLanguageTag("pt-BR"),"%.1f%%\nde acertos",percentual)
             setExtraOffsets(8f,8f,8f,8f)
         }
@@ -172,15 +172,15 @@ class DesempenhoTopicosActivity : AppCompatActivity() {
         conteudo.addView(TextView(this).apply {
             text=if (detalhado) "Conteúdos respondidos" else "Matérias respondidas"
             textSize=20f; typeface=Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#1A237E")); setPadding(0,dp(12),0,dp(10))
+            setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,dp(12),0,dp(10))
         })
         itens.forEachIndexed { indice,item -> adicionarItem(item,if (detalhado) COR_CONTEUDOS[indice%COR_CONTEUDOS.size] else corMateria(item.materia)) }
     }
 
     private fun adicionarItem(item:ItemDesempenho,cor:Int) {
         val card=MaterialCardView(this).apply {
-            radius=dp(15).toFloat(); strokeWidth=dp(1); strokeColor=Color.parseColor("#E1E3EE")
-            setCardBackgroundColor(Color.WHITE); cardElevation=0f
+            radius=dp(15).toFloat(); strokeWidth=dp(1); strokeColor=UiPaleta.hex("#E1E3EE")
+            setCardBackgroundColor(UiPaleta.superficie()); cardElevation=0f
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(10) }
             isClickable=true; isFocusable=true
             setOnClickListener { mostrarDetalhe(item); if (!detalhado) abrirConteudos(item) }
@@ -193,14 +193,14 @@ class DesempenhoTopicosActivity : AppCompatActivity() {
         linha.addView(LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             addView(TextView(this@DesempenhoTopicosActivity).apply {
-                text=item.nome; textSize=16f; typeface=Typeface.DEFAULT_BOLD; setTextColor(Color.parseColor("#1A1A2E"))
+                text=item.nome; textSize=16f; typeface=Typeface.DEFAULT_BOLD; setTextColor(UiPaleta.hex("#1A1A2E"))
             })
             addView(TextView(this@DesempenhoTopicosActivity).apply {
                 text="${formatar(item.percentualAcertos)}% de acertos · ${item.acertos} certas · ${item.erros} erradas"
-                textSize=14f; setTextColor(Color.parseColor("#666680")); setPadding(0,dp(4),0,0)
+                textSize=14f; setTextColor(UiPaleta.hex("#666680")); setPadding(0,dp(4),0,0)
             })
         },LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f))
-        if (!detalhado) linha.addView(TextView(this).apply { text="›";textSize=29f;setTextColor(Color.parseColor("#9FA8DA")) })
+        if (!detalhado) linha.addView(TextView(this).apply { text="›";textSize=29f;setTextColor(UiPaleta.hex("#9FA8DA")) })
         card.addView(linha); conteudo.addView(card)
     }
 

@@ -32,6 +32,7 @@ try {
     $fontes=array_map(fn($nome)=>__DIR__.'/../'.$nome,$scripts);
     $fontes=array_merge($fontes,[__FILE__,__DIR__.'/../appest_schema.sql',__DIR__.'/migrar_biblioteca.php',__DIR__.'/migrar_menu.php',__DIR__.'/sincronizar_catalogo.php',dirname(__DIR__,2).'/biblioteca/catalogo-drive.json']);
     $fontes[]=__DIR__.'/migrar_coordenacao.php';
+    $fontes[]=__DIR__.'/migrar_orientacoes.php';
     $assinatura=hash('sha256',implode('',array_map(fn($arquivo)=>hash_file('sha256',$arquivo),$fontes)));
     $marcador='estrutura-v2-'.$assinatura;
     $s=$conn->prepare('SELECT 1 FROM instalacao_local WHERE chave=?'); $s->bind_param('s',$marcador); $s->execute();
@@ -84,6 +85,7 @@ try {
     if (!$estruturaPronta) {
         require __DIR__.'/migrar_menu.php';
         require __DIR__.'/migrar_coordenacao.php';
+        require __DIR__.'/migrar_orientacoes.php';
         $s=$conn->prepare('INSERT INTO instalacao_local (chave) VALUES (?)'); $s->bind_param('s',$marcador); $s->execute();
         $conn->query("DELETE FROM instalacao_local WHERE chave LIKE 'estrutura-v2-%' AND chave<>'".$conn->real_escape_string($marcador)."'");
     }

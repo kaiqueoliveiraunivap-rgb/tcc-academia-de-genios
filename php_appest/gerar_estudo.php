@@ -5,7 +5,7 @@ require_once __DIR__ . '/orientacao_turma.php';
 require_once __DIR__ . '/perfis.php';
 $aluno=exigirUsuarioLogado($conn);
 if (normalizarPerfil($aluno['tipo_perfil'])!=='aluno') responderErro('Estudo exclusivo de alunos.',403);
-set_time_limit(120);
+set_time_limit(210);
 $id = inteiroDoPost('id_capitulo');
 $nivel = 'MEDIO';
 if (!$id) responderErro('Capítulo inválido.');
@@ -39,7 +39,7 @@ try {
     if (!$paginas || strlen($cap['paginas_json'])>180000) responderErro('Capítulo sem texto ou muito extenso. Solicite a revisão/divisão do conteúdo.',422);
     $model=configuracao('GEMINI_MODEL');
     if (!$model || !preg_match('/^[a-zA-Z0-9.\-]+$/',$model)) responderErro('Configure GEMINI_MODEL no servidor.',503);
-    $orientacao=orientacaoDaTurma($conn,$idTurma,$cap['materia']);
+    $orientacao=orientacaoDaTurma($conn,$idTurma,$cap['materia'],(int)$cap['id_livro']);
     $idPrompt=$orientacao ? (int)$orientacao['id_prompt'] : null;
     // Nova explicação, edição do capítulo ou orientação exigem um novo estudo.
     // O resultado personalizado é compartilhado somente pela turma destinatária.
@@ -79,7 +79,7 @@ try {
         $porBloco=max(45,(int)ceil($minimo/8)+15);
         $instrucao=instrucaoEstudoCompleto().' Para este capítulo, organize a explicação em 8 blocos. Escreva de '.$porBloco.' a '.($porBloco+40).' palavras no campo texto de cada bloco, além dos tópicos. O conjunto precisa de no mínimo '.$minimo.' palavras, mantendo cada parágrafo fundamentado no trecho escolhido. Confira esses limites antes de concluir o JSON; não envie uma síntese curta.';
         $entrada='Matéria: '.$cap['materia']."\nCapítulo selecionado: ".$cap['titulo']."\nTexto completo do capítulo em trechos:\n".json_encode($fontesPreparadas,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
-        if ($orientacao) $entrada.="\n\nOrientação de foco do professor, válida apenas quando este capítulo sustentar o assunto: ".mb_substr($orientacao['prompt_final'],0,4000);
+        if ($orientacao) $entrada.="\n\nOrientação do professor para este estudo: ".mb_substr($orientacao['prompt_final'],0,4000)."\nAplique o foco no resumo e crie questões de quiz sobre ele, sempre com referências ao capítulo. Se o trecho não sustentar algum ponto, não invente fatos.";
         $body=['systemInstruction'=>['parts'=>[['text'=>$instrucao]]],'contents'=>[['role'=>'user','parts'=>[['text'=>$entrada]]]],'generationConfig'=>['temperature'=>0.2,'maxOutputTokens'=>5000,'responseMimeType'=>'application/json','responseSchema'=>$schema]];
         $falha=null;
         $tentativas=0;
@@ -94,7 +94,7 @@ try {
             if ($tentativa>0) $corpoTentativa['contents'][0]['parts'][0]['text']=$entrada."\n\nCorreção obrigatória: ".mb_substr($falha->getMessage(),0,280)." Retorne o JSON completo, com 8 blocos de ao menos {$porBloco} palavras e todas as regras acima.";
             try {
                 $ch=curl_init('https://generativelanguage.googleapis.com/v1beta/models/'.$model.':generateContent');
-                curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>10,CURLOPT_TIMEOUT=>45,CURLOPT_HTTPHEADER=>['Content-Type: application/json','x-goog-api-key: '.$key],CURLOPT_POSTFIELDS=>json_encode($corpoTentativa,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)]);
+                curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>10,CURLOPT_TIMEOUT=>90,CURLOPT_HTTPHEADER=>['Content-Type: application/json','x-goog-api-key: '.$key],CURLOPT_POSTFIELDS=>json_encode($corpoTentativa,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)]);
                 $raw=curl_exec($ch); $http=curl_getinfo($ch,CURLINFO_HTTP_CODE); $curlError=curl_error($ch); curl_close($ch);
                 if ($http!==200 || !$raw) {
                     $provider=json_decode($raw ?: '{}',true);
@@ -128,7 +128,8 @@ try {
     }
     validarEstudoCompleto($dados,$paginas);
     if ($origemGeracao==='cache') registrarMetricasGeracaoEstudo(['origem'=>'cache','duracao_ms'=>(int)((microtime(true)-$inicioRequisicao)*1000),'modelo'=>$model]);
-    $resposta=['status'=>'sucesso','id_estudo'=>$idEstudo,'id_turma'=>$idTurma,'dificuldade'=>$nivel,'estudo'=>$dados,'livro'=>$cap['livro'],'capitulo'=>$cap['titulo'],'fonte_url'=>$cap['fonte_url']];
+    $resposta=['status'=>'sucesso','id_estudo'=>$idEstudo,'id_turma'=>$idTurma,'dificuldade'=>$nivel,'estudo'=>$dados,'livro'=>$cap['livro'],'capitulo'=>$cap['titulo'],'fonte_url'=>$cap['fonte_url'],
+        'bimestre'=>$orientacao['bimestre'] ?? null,'orientacao_professor'=>$orientacao ? ['professor'=>$orientacao['nome_professor'],'instrucao'=>$orientacao['instrucao']] : null];
 } catch (Throwable $e) {
     error_log('Falha estudo: '.get_class($e).' — '.$e->getMessage());
     $mensagem=str_contains($e->getMessage(),'HTTP 0,')

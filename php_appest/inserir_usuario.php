@@ -8,6 +8,7 @@
 require_once 'auth.php';
 
 exigirPost();
+responderErro('Cadastros de alunos são realizados somente pela secretaria.', 403);
 
 const SENHA_MINIMA_ALUNO = 8;
 

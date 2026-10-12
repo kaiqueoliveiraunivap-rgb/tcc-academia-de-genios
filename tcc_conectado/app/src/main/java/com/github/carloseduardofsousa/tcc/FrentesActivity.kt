@@ -31,15 +31,15 @@ class FrentesActivity : AppCompatActivity() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             val p=(24*densidade).toInt(); setPadding(p,p,p,p)
-            setBackgroundColor(Color.parseColor("#FAFAFA"))
+            setBackgroundColor(UiPaleta.hex("#FAFAFA"))
         }
-        root.addView(Button(this).apply { text="Voltar"; setOnClickListener { finish() } })
+        root.addView(TextView(this).apply { text="‹  Voltar"; textSize=16f; setTextColor(getColor(R.color.Destaque)); minHeight=EstudoUi.dp(this@FrentesActivity,48); gravity=android.view.Gravity.CENTER_VERTICAL; setOnClickListener { finish() } })
         root.addView(TextView(this).apply {
             text=intent.getStringExtra("MATERIA") ?: "Frentes"; textSize=27f
-            typeface=Typeface.DEFAULT_BOLD; setTextColor(Color.parseColor("#1A237E")); setPadding(0,18,0,4)
+            typeface=Typeface.DEFAULT_BOLD; setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,18,0,4)
         })
-        root.addView(TextView(this).apply { text="Escolha a frente do livro"; textSize=16f; setTextColor(Color.parseColor("#666680")); setPadding(0,0,0,18) })
-        status=TextView(this).apply { textSize=16f }
+        root.addView(TextView(this).apply { text="Escolha a frente do livro"; textSize=16f; setTextColor(UiPaleta.hex("#666680")); setPadding(0,0,0,18) })
+        status=TextView(this).apply { textSize=16f; setTextColor(UiPaleta.hex("#666680")) }
         root.addView(status)
         progresso=ProgressBar(this)
         root.addView(progresso)
@@ -73,19 +73,20 @@ class FrentesActivity : AppCompatActivity() {
                 return@launch
             }
             val frentes=json.getJSONArray("frentes")
-            status.text=if(frentes.length()==0) "Ainda não há livros disponíveis para esta matéria." else "Escolha o livro e a frente que deseja estudar"
+            status.text=if(frentes.length()==0) "Ainda não há livros disponíveis para esta matéria." else ""
+            status.visibility=if(frentes.length()==0) View.VISIBLE else View.GONE
             for(i in 0 until frentes.length()){
                 val frente=frentes.getJSONObject(i)
                 lista.addView(LinearLayout(this@FrentesActivity).apply {
                     orientation=LinearLayout.VERTICAL
                     val p = EstudoUi.dp(context, 16); setPadding(p,p,p,p)
                     minimumHeight = EstudoUi.dp(context, 64)
-                    background=GradientDrawable().apply{setColor(Color.WHITE);cornerRadius=20f;setStroke(2,Color.parseColor("#E4E6F2"))}
+                    background=GradientDrawable().apply{setColor(UiPaleta.superficie());cornerRadius=20f;setStroke(2,UiPaleta.hex("#E4E6F2"))}
                     layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,12,0,4)}
-                    addView(TextView(this@FrentesActivity).apply{text=frente.getString("livro");textSize=18f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.parseColor("#1A237E"))})
-                    addView(TextView(this@FrentesActivity).apply{text=frente.getString("titulo");textSize=16f;setTextColor(Color.parseColor("#455A64"));setPadding(0,6,0,0)})
+                    addView(TextView(this@FrentesActivity).apply{text=EstudoUi.nomeLivro(frente.getString("livro"));textSize=18f;typeface=Typeface.DEFAULT_BOLD;setTextColor(UiPaleta.hex("#1A237E"))})
+                    addView(TextView(this@FrentesActivity).apply{text=frente.getString("titulo");textSize=16f;setTextColor(UiPaleta.hex("#455A64"));setPadding(0,6,0,0)})
                     val total = frente.getInt("total_capitulos"); val concluidos = frente.optInt("concluidos")
-                    addView(TextView(this@FrentesActivity).apply{text="$concluidos de $total capítulos concluídos";textSize=16f;setTextColor(Color.parseColor("#455A64"));setPadding(0,6,0,0)})
+                    addView(TextView(this@FrentesActivity).apply{text="$concluidos de $total capítulos concluídos";textSize=16f;setTextColor(UiPaleta.hex("#455A64"));setPadding(0,6,0,0)})
                     addView(ProgressBar(this@FrentesActivity, null, android.R.attr.progressBarStyleHorizontal).apply {
                         max = maxOf(1, total); progress = concluidos
                         contentDescription = "$concluidos de $total capítulos concluídos"
@@ -101,4 +102,5 @@ class FrentesActivity : AppCompatActivity() {
             }
         }
     }
+
 }

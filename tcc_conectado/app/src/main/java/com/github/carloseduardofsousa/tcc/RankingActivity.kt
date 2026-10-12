@@ -49,16 +49,16 @@ class RankingActivity : AppCompatActivity() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             setPadding(dp(20),dp(20),dp(20),dp(12))
-            setBackgroundColor(Color.parseColor("#F5F7FA"))
+            setBackgroundColor(UiPaleta.hex("#F5F7FA"))
         }
         root.addView(Button(this).apply {
             text="← Voltar";isAllCaps=false
-            backgroundTintList=ColorStateList.valueOf(Color.WHITE)
-            setTextColor(Color.parseColor("#1A237E"));setOnClickListener { finish() }
+            backgroundTintList=ColorStateList.valueOf(UiPaleta.superficie())
+            setTextColor(UiPaleta.hex("#1A237E"));setOnClickListener { finish() }
         })
         titulo=TextView(this).apply {
             text="Ranking";textSize=26f;typeface=Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#1A237E"));setPadding(0,dp(18),0,dp(5))
+            setTextColor(UiPaleta.hex("#1A237E"));setPadding(0,dp(18),0,dp(5))
         };root.addView(titulo)
         val controle = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         periodo = EstudoUi.texto(this, "", 17f, true); controle.addView(periodo)
@@ -69,7 +69,7 @@ class RankingActivity : AppCompatActivity() {
         botoes.addView(seguinte, LinearLayout.LayoutParams(0,-2,1f))
         controle.addView(botoes); root.addView(controle)
         status=TextView(this).apply {
-            text="Carregando pontuações…";textSize=15f;setTextColor(Color.parseColor("#666680"));setPadding(0,0,0,dp(14))
+            text="Carregando pontuações…";textSize=15f;setTextColor(UiPaleta.hex("#666680"));setPadding(0,0,0,dp(14))
         };root.addView(status)
         progresso=ProgressBar(this);root.addView(progresso)
         lista=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
@@ -138,15 +138,15 @@ class RankingActivity : AppCompatActivity() {
 
     private fun adicionarBarra(posicao:Int,item:ItemRanking,maximo:Int) {
         val cor=when(posicao) {
-            1->Color.parseColor("#D4AF37")
-            2->Color.parseColor("#90A4AE")
-            3->Color.parseColor("#BF7B45")
-            else->Color.parseColor("#5C6BC0")
+            1->UiPaleta.hex("#D4AF37")
+            2->UiPaleta.hex("#90A4AE")
+            3->UiPaleta.hex("#BF7B45")
+            else->UiPaleta.hex("#5C6BC0")
         }
         val card=MaterialCardView(this).apply {
             radius=dp(15).toFloat();cardElevation=0f;strokeWidth=dp(if(item.proprio) 2 else 1)
-            strokeColor=Color.parseColor(if(item.proprio) "#5C6BC0" else "#E1E3EE")
-            setCardBackgroundColor(Color.WHITE)
+            strokeColor=UiPaleta.hex(if(item.proprio) "#5C6BC0" else "#E1E3EE")
+            setCardBackgroundColor(UiPaleta.superficie())
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(11) }
         }
         val bloco=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(13),dp(14),dp(14)) }
@@ -157,7 +157,7 @@ class RankingActivity : AppCompatActivity() {
         },LinearLayout.LayoutParams(dp(42),-2))
         cabecalho.addView(TextView(this).apply {
             text=item.nome+(if(item.proprio) " (você)" else "")
-            textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.parseColor("#1A1A2E"))
+            textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(UiPaleta.hex("#1A1A2E"))
         },LinearLayout.LayoutParams(0,-2,1f))
         cabecalho.addView(TextView(this).apply {
             text="${item.pontos} pts";textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(cor)
@@ -166,7 +166,7 @@ class RankingActivity : AppCompatActivity() {
 
         val trilho=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL;weightSum=maximo.toFloat()
-            background=GradientDrawable().apply { setColor(Color.parseColor("#E7E9F2"));cornerRadius=dp(8).toFloat() }
+            background=GradientDrawable().apply { setColor(UiPaleta.hex("#E7E9F2"));cornerRadius=dp(8).toFloat() }
         }
         if (item.pontos>0) trilho.addView(View(this).apply {
             background=GradientDrawable().apply { setColor(cor);cornerRadius=dp(8).toFloat() }

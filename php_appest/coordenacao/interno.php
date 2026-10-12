@@ -63,6 +63,14 @@ function pastaLivros(): string {
     if (!is_dir($p) && !mkdir($p,0700,true) && !is_dir($p)) throw new RuntimeException('Não foi possível criar a pasta privada dos livros.');
     return $p;
 }
+function caminhoFotoPerfil(int $id): string {
+    return pastaLivros().'/perfil-'.$id.'.img';
+}
+function tipoFotoPerfil(string $arquivo): ?string {
+    if (!is_file($arquivo)) return null;
+    $tipo=(new finfo(FILEINFO_MIME_TYPE))->file($arquivo);
+    return in_array($tipo,['image/jpeg','image/png','image/webp'],true) ? $tipo : null;
+}
 function iniciarWorker(): void {
     if (configuracao('COORD_WORKER_EXTERNO')==='1') return;
     $worker=dirname(__DIR__).'/tools/coordenacao_worker.php';

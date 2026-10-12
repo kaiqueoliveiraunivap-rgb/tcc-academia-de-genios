@@ -41,6 +41,8 @@ try {
     $turma=(int)$admin->insert_id;
     $admin->query("INSERT INTO turma(nome_turma,ano_letivo,id_professor,serie) VALUES ('Outra turma','2026',".$ids['professor'].",'1ª série')");
     $outra=(int)$admin->insert_id;
+    $painel=endpointTeste('dashboard_turmas.php',['token'=>$tokens['professor']]);
+    verificar(count($painel['turmas'])===2 && $painel['turmas'][0]['serie']==='1ª série','O painel do professor perdeu a série das turmas.');
     foreach (['aluno1'=>$turma,'aluno2'=>$turma,'fora'=>$outra] as $nome=>$t) $admin->query('INSERT INTO matricula(id_aluno,id_turma) VALUES ('.$ids[$nome].','.$t.')');
     $admin->query("INSERT INTO livro_didatico(titulo,materia,fonte_url,versao) VALUES ('Livro teste','Matéria teste','https://example.invalid/livro','teste')");
     $livro=(int)$admin->insert_id;
@@ -145,8 +147,22 @@ try {
     $ranking=endpointTeste('ranking_serie.php',['token'=>$tokens['aluno1'],'id_turma'=>$turma,'mes_referencia'=>date('Y-m')]);
     verificar(count($ranking['ranking'])===2 && $ranking['ranking'][0]['pontos']===9,'Ranking perdeu pontuação mensal ou duplicou aluno.');
     verificar(endpointTeste('ranking_serie.php',['token'=>$tokens['aluno1'],'id_turma'=>$turma,'mes_referencia'=>'2000-01'])['ranking']===[],'Consulta mensal misturou períodos.');
+    endpointTeste('inserir_usuario.php',['nome'=>'Conta indevida','email'=>'indevida@teste.invalid','senha'=>'Senha12345'],403);
+    endpointTeste('cadastrar_professor.php',['nome'=>'Conta indevida','email'=>'indevida2@teste.invalid','senha'=>'Senha12345','codigo_convite'=>'abc'],403);
+    verificar($admin->query("SELECT 1 FROM usuario WHERE email LIKE 'indevida%@teste.invalid'")->num_rows===0,'Cadastro público ainda criou conta.');
+    $livros=endpointTeste('listar_livros_professor.php',['token'=>$tokens['professor'],'materia'=>'Matéria teste'])['livros'];
+    verificar((int)$livros[0]['id_livro']===$livro,'Livro da matéria não apareceu para o professor.');
+    endpointTeste('listar_livros_professor.php',['token'=>$tokens['aluno1'],'materia'=>'Matéria teste'],403);
+    endpointTeste('enviar_prompt_professor.php',array_merge($post,['id_livro'=>$livro,'bimestre'=>5]),422);
+    endpointTeste('enviar_prompt_professor.php',array_merge($post,['id_livro'=>$livro+9999]),422);
+    $porLivro=endpointTeste('enviar_prompt_professor.php',array_merge($post,['id_livro'=>$livro,'bimestre'=>2]))['id_prompt'];
+    verificar($porLivro!==$novo,'Livro específico reutilizou orientação geral.');
+    $escolhida=endpointTeste('buscar_prompt_pendente.php',['token'=>$tokens['aluno1'],'materia'=>'Matéria teste','id_livro'=>$livro])['prompt'];
+    verificar($escolhida['id_prompt']===$porLivro && (int)$escolhida['bimestre']===2,'Orientação do livro/bimestre não ganhou prioridade.');
+    verificar(endpointTeste('buscar_prompt_pendente.php',['token'=>$tokens['aluno1'],'materia'=>'Matéria teste'])['prompt']['id_prompt']===$novo,'Orientação geral foi substituída ao escolher livro.');
     echo "OK: histórico paginado, revisão privada, alternativas antigas, refazer, progresso distinto e ranking mensal.\n";
     echo "OK: 2 alunos compartilham a orientação e o quiz médio; outra turma não acessa; atualização e reenvios preservam resultados.\n";
+    echo "OK: só a secretaria cadastra; professor filtra livro e bimestre; orientação específica precede a geral.\n";
 } finally {
     // Somente o banco aleatório criado por este processo pode ser removido.
     if ($criado && preg_match('/^appest_test_turma_[a-f0-9]{10}$/',$dbTeste)) $admin->query("DROP DATABASE `$dbTeste`");

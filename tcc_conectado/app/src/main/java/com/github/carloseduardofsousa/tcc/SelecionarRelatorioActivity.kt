@@ -39,12 +39,12 @@ class SelecionarRelatorioActivity : AppCompatActivity() {
         val root=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             val p=(24*resources.displayMetrics.density).toInt();setPadding(p,p,p,p)
-            setBackgroundColor(Color.parseColor("#F5F7FA"))
+            setBackgroundColor(UiPaleta.hex("#F5F7FA"))
         }
-        root.addView(Button(this).apply { text="← Voltar";isAllCaps=false;setOnClickListener { finish() } })
+        root.addView(TextView(this).apply { text="‹  Voltar"; textSize=16f; setTextColor(getColor(R.color.Destaque)); minHeight=EstudoUi.dp(this@SelecionarRelatorioActivity,48); gravity=android.view.Gravity.CENTER_VERTICAL; setOnClickListener { finish() } })
         root.addView(TextView(this).apply {
             text=if(modo=="RANKING_SERIE") "Ranking por série" else "Desempenho da turma"
-            textSize=26f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.parseColor("#1A237E"));setPadding(0,24,0,4)
+            textSize=26f;typeface=Typeface.DEFAULT_BOLD;setTextColor(UiPaleta.hex("#1A237E"));setPadding(0,24,0,4)
         })
         status=TextView(this).apply { text="Carregando opções…";textSize=16f;setPadding(0,12,0,16) };root.addView(status)
         val serieContainer=campo("Série").also { root.addView(it.first) };serie=serieContainer.second

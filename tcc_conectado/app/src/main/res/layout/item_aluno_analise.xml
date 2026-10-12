@@ -64,7 +64,7 @@
             android:layout_height="40dp"
             android:text="Editar"
             android:textSize="12sp"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/TextoNoPrimario"
             android:backgroundTint="@color/Destaque"
             android:minWidth="0dp"
             android:paddingStart="18dp"

@@ -6,7 +6,7 @@
     <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FAFAFA"
+        android:background="@color/BackGround"
         android:fillViewport="true">
 
         <LinearLayout
@@ -15,6 +15,16 @@
             android:orientation="vertical"
             android:padding="24dp">
 
+            <TextView
+                android:id="@+id/btnVoltarMaterias"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:contentDescription="Voltar ao menu"
+                android:text="‹  Voltar"
+                android:textColor="@color/Destaque"
+                android:textSize="16sp" />
+
             <!-- Título -->
             <TextView
                 android:layout_width="wrap_content"
@@ -22,7 +32,7 @@
                 android:text="O que vamos estudar?"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="#1A1A2E"
+                android:textColor="@color/TextoPrincipal"
                 android:layout_marginTop="16dp"/>
 
             <TextView
@@ -30,7 +40,7 @@
                 android:layout_height="wrap_content"
                 android:text="Escolha a matéria que deseja estudar"
                 android:textSize="14sp"
-                android:textColor="#666680"
+                android:textColor="@color/TextoSecundario"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="24dp"/>
 
@@ -41,7 +51,7 @@
                 android:text="MATÉRIA"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="#455A64"
+                android:textColor="@color/BordaButton"
                 android:letterSpacing="0.12"
                 android:layout_marginBottom="8dp"/>
 
@@ -73,7 +83,7 @@
                     android:layout_height="wrap_content"
                     android:text="✨ Gerando questões com IA..."
                     android:textSize="14sp"
-                    android:textColor="#5C6BC0"
+                    android:textColor="@color/Destaque"
                     android:gravity="center"
                     android:visibility="gone"
                     android:layout_marginTop="8dp"/>
@@ -90,8 +100,8 @@
                 android:text="Iniciar Quiz"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:backgroundTint="#5C6BC0"
+                android:textColor="@color/TextoNoPrimario"
+                android:backgroundTint="@color/Destaque"
                 android:enabled="false"
                 android:alpha="0.5"
                 android:layout_marginTop="8dp"
