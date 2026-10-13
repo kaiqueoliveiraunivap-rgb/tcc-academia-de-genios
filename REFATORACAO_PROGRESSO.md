@@ -13,13 +13,13 @@ Branch local: `refatoracao-tcc`. Não houve push. Não executar exclusões em ba
 ## Verificado
 
 - `php_appest/tests/pedagogico_smoke.php` com `DB_NAME=academia_refatoracao_test`: passou; cobre autorização, CSRF, catálogo, retomada, atividades com duas unidades, quiz idempotente, ranking e PDF.
+- `php_appest/tests/gemini_smoke.php` com chave apenas no ambiente e material sintético: passou; estudo validado, cinco questões e cache reutilizado.
 - Migração aplicada duas vezes no banco isolado: passou.
 - `:app:assembleDebug --offline -PskipLocalApi=true`: passou. APK instalado e `LoginActivity` aberta no emulador.
 - Lint dos PHP modificados e `git diff --check`: passaram.
 
 ## Próximo trabalho
 
-- Validar geração real do Gemini em ambiente de teste com credenciais disponíveis apenas por variável de ambiente; nenhuma credencial deve entrar no Git.
 - Completar estados reais de preparação da IA; geração assíncrona exige infraestrutura persistente de fila/worker na hospedagem.
 - Refinar tema claro/escuro e componentes das telas legadas, inclusive relatórios de notas, sem misturar notas com quizzes.
 - Ampliar testes Android e navegação autenticada de aluno/professor/secretaria; executar revisão visual no emulador e painel.
