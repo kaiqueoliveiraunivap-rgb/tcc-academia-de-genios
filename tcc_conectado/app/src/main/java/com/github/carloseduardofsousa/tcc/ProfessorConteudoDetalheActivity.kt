@@ -136,7 +136,7 @@ class ProfessorConteudoDetalheActivity : AppCompatActivity() {
             val d=json.getJSONObject("desempenho")
             val respostas=d.optInt("respostas")
             desempenho.addView(texto(if(respostas==0) "Nenhum quiz realizado neste conteúdo até agora."
-                else "${d.optInt("alunos")} alunos participantes · $respostas respostas · ${d.optDouble("aproveitamento").toInt()}% de acertos"))
+                else "${d.optInt("alunos")} ${if (d.optInt("alunos")==1) "aluno participante" else "alunos participantes"} · $respostas ${if (respostas==1) "resposta" else "respostas"} · ${d.optDouble("aproveitamento").toInt()}% de acertos"))
             val dificuldades=json.getJSONArray("dificuldades")
             if (dificuldades.length()>0) {
                 desempenho.addView(texto("Assuntos com mais erros:"))

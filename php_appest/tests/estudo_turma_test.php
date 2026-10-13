@@ -145,7 +145,10 @@ try {
     verificar(count($pagina2['historico'])===7 && $pagina2['proximo_cursor']===null,'Histórico pulou tentativas ao paginar.');
     verificar(array_intersect(array_column($pagina1['historico'],'id_quiz'),array_column($pagina2['historico'],'id_quiz'))===[],'Histórico repetiu tentativas entre páginas.');
     $ranking=endpointTeste('ranking_serie.php',['token'=>$tokens['aluno1'],'id_turma'=>$turma,'mes_referencia'=>date('Y-m')]);
-    verificar(count($ranking['ranking'])===2 && $ranking['ranking'][0]['pontos']===9,'Ranking perdeu pontuação mensal ou duplicou aluno.');
+    // O histórico guarda todas as tentativas, mas o mês considera só a melhor
+    // nota deste conteúdo (cinco pontos), inclusive após 25 repetições.
+    verificar(count($ranking['ranking'])===2 && $ranking['ranking'][0]['pontos']===5 &&
+        $ranking['ranking'][1]['pontos']===5,'Ranking mensal multiplicou tentativas do mesmo conteúdo.');
     verificar(endpointTeste('ranking_serie.php',['token'=>$tokens['aluno1'],'id_turma'=>$turma,'mes_referencia'=>'2000-01'])['ranking']===[],'Consulta mensal misturou períodos.');
     endpointTeste('inserir_usuario.php',['nome'=>'Conta indevida','email'=>'indevida@teste.invalid','senha'=>'Senha12345'],403);
     endpointTeste('cadastrar_professor.php',['nome'=>'Conta indevida','email'=>'indevida2@teste.invalid','senha'=>'Senha12345','codigo_convite'=>'abc'],403);

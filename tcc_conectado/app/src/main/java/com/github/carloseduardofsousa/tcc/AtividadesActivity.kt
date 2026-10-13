@@ -82,7 +82,7 @@ class AtividadesActivity : AppCompatActivity() {
             }
             val itens=json.getJSONArray("atividades")
             status.text=if (itens.length()==0) "Nenhuma atividade publicada para sua turma. Explore os conteúdos em Estudar."
-                else "${itens.length()} atividade(s) da sua turma"
+                else "${itens.length()} ${if (itens.length()==1) "atividade" else "atividades"} da sua turma"
             for (i in 0 until itens.length()) {
                 val item=itens.getJSONObject(i)
                 val estado=when(item.optString("estado")) {

@@ -58,6 +58,8 @@ try {
     if (count($primeiro['estudo']['questoes'] ?? [])!==5) throw new RuntimeException('Quiz gerado sem cinco questões.');
     [$http,$segundo]=endpointGemini($post);
     if ($http!==200 || (int)($segundo['id_estudo'] ?? 0)!==$idEstudo) throw new RuntimeException('O cache não reutilizou o estudo.');
+    [$http,$status]=endpointGemini($post+['somente_status'=>1]);
+    if ($http!==200 || ($status['fase'] ?? '')!=='concluido') throw new RuntimeException('Status final do estudo incorreto.');
     echo "OK: Gemini gerou estudo validado com cinco questões e cache reutilizado.\n";
 } finally {
     if (isset($ids['capitulo'])) inserirGemini($conn,'DELETE FROM estudo_gerado WHERE id_capitulo=?',[$ids['capitulo']]);

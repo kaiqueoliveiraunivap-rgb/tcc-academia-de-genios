@@ -95,7 +95,8 @@ class ConteudosActivity : AppCompatActivity() {
                 aviso.text="A secretaria ainda está organizando os conteúdos desta matéria para sua série."
                 return@launch
             }
-            aviso.text="${json.optString("serie")} · ${itens.length()} conteúdos disponíveis"
+            val quantidade=itens.length()
+            aviso.text="${json.optString("serie")} · $quantidade ${if (quantidade==1) "conteúdo disponível" else "conteúdos disponíveis"}"
             var ultimoGrupo=""
             for (i in 0 until itens.length()) {
                 val item=itens.getJSONObject(i)

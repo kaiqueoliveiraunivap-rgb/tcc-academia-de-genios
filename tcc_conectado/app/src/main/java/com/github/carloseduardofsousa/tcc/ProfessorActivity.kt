@@ -92,7 +92,7 @@ class TurmaAdapter(
         val textos = h.card.getChildAt(0) as LinearLayout
         (textos.getChildAt(0) as TextView).text = item.nomeTurma
         (textos.getChildAt(1) as TextView).text =
-            "${item.serie} · ${item.anoLetivo} · ${item.totalAlunos} alunos · ${item.atividades} atividades"
+            "${item.serie} · ${item.anoLetivo} · ${item.totalAlunos} ${if (item.totalAlunos==1) "aluno" else "alunos"} · ${item.atividades} ${if (item.atividades==1) "atividade" else "atividades"}"
         h.card.setOnClickListener { onClick(item) }
     }
 
@@ -184,9 +184,13 @@ class ProfessorActivity : AppCompatActivity() {
                 val json = dados.optJSONArray("turmas") ?: JSONArray()
                 val media=if (dados.isNull("aproveitamento_medio")) "Sem quizzes ainda"
                     else "${dados.optDouble("aproveitamento_medio").toInt()}% de aproveitamento nos quizzes"
+                val turmasTotal=dados.optInt("turmas_total")
+                val alunosTotal=dados.optInt("alunos_total")
+                val atividades=dados.optInt("atividades_publicadas")
+                val concluidas=dados.optInt("atividades_concluidas")
                 findViewById<TextView>(R.id.txtIndicadoresProfessor).text =
-                    "${dados.optInt("turmas_total")} turmas · ${dados.optInt("alunos_total")} alunos\n"+
-                    "${dados.optInt("atividades_publicadas")} atividades publicadas · ${dados.optInt("atividades_concluidas")} conclusões\n$media"
+                    "$turmasTotal ${if (turmasTotal==1) "turma" else "turmas"} · $alunosTotal ${if (alunosTotal==1) "aluno" else "alunos"}\n"+
+                    "$atividades ${if (atividades==1) "atividade publicada" else "atividades publicadas"} · $concluidas ${if (concluidas==1) "conclusão" else "conclusões"}\n$media"
 
                 if (json.length() == 0) {
                     txtVazio.text = "Você ainda não tem turmas vinculadas. Procure a secretaria."

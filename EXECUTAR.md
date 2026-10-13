@@ -1,6 +1,6 @@
 # Executar no emulador
 
-Abra **a pasta `tcc_conectado` desta cópia do projeto** no Android Studio, selecione um emulador e clique em **Run**. No Windows, o build de desenvolvimento inicia a API e o MySQL locais automaticamente. Se a API já estiver pronta, a checagem rápida não repete o instalador nem a importação dos livros.
+Abra **a pasta `tcc_conectado` desta cópia do projeto** no Android Studio, selecione um emulador e clique em **Run**. Antes de entrar, inicie a API local explicitamente. O build comum não executa o instalador nem altera o banco.
 
 O script `iniciar-local.ps1`:
 
@@ -33,9 +33,9 @@ Nesta instalação local, os 30 PDFs do Drive já foram importados: 70 frentes e
 - O Apache e o conteúdo antigo em `C:\xampp\htdocs\php_appest` não foram alterados. O app usa a API nova na porta 8088.
 - Para outra API: configure `API_BASE_URL` no `tcc_conectado/local.properties`.
 - O `debug` aceita HTTP para o XAMPP local. O `release` bloqueia tráfego HTTP: para publicar, defina `API_BASE_URL` com HTTPS antes de gerar o APK/AAB.
-- O build debug com a URL local prepara a API automaticamente. Para iniciar sem compilar, execute `iniciar-local.ps1` ou rode a tarefa Gradle `prepararAmbienteLocal`.
+- Para iniciar serviços e aplicar migrações explicitamente, execute `iniciar-local.ps1 -Xampp C:\xampp` (ajuste o caminho) ou compile com `-PstartLocalApi=true`. A tarefa Gradle `prepararAmbienteLocal` também exige essa propriedade. Essas opções podem executar o instalador; use um banco isolado para testes de migração.
 - Para hospedar a API e o banco sem XAMPP, siga `HOSPEDAGEM.md`.
-- Em CI: use `-PskipLocalApi=true` para compilar sem iniciar serviços. O início automático é somente do build debug com a URL local no Windows.
+- Em CI, `assembleDebug` e `assembleRelease` não iniciam serviços por padrão.
 - Para encerrar apenas a API iniciada por este projeto: `parar-api-local.ps1`.
 
 ## Verificação

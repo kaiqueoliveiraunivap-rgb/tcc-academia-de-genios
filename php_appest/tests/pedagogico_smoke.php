@@ -50,13 +50,14 @@ function confirmar(bool $ok,string $mensagem): void {
 }
 try {
     $sufixo=bin2hex(random_bytes(5)); $senha=password_hash(bin2hex(random_bytes(16)),PASSWORD_DEFAULT);
+    $serieA="2º Ano Teste $sufixo"; $serieB="3º Ano Teste $sufixo";
     $ids['prof']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Professor Teste $sufixo","prof-$sufixo@example.invalid",$senha,'professor']);
     $ids['profOutro']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Outro Professor $sufixo","prof-outro-$sufixo@example.invalid",$senha,'professor']);
     $ids['admin']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Secretaria Teste $sufixo","secretaria-$sufixo@example.invalid",$senha,'admin']);
     $ids['alunoA']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Aluno A $sufixo","aluno-a-$sufixo@example.invalid",$senha,'aluno']);
     $ids['alunoB']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Aluno B $sufixo","aluno-b-$sufixo@example.invalid",$senha,'aluno']);
-    $ids['turmaA']=gravar($conn,'INSERT INTO turma(nome_turma,serie,ano_letivo,id_professor) VALUES (?,?,?,?)',["2º Ano A $sufixo",'2º Ano','2026',$ids['prof']]);
-    $ids['turmaB']=gravar($conn,'INSERT INTO turma(nome_turma,serie,ano_letivo,id_professor) VALUES (?,?,?,?)',["3º Ano A $sufixo",'3º Ano','2026',$ids['profOutro']]);
+    $ids['turmaA']=gravar($conn,'INSERT INTO turma(nome_turma,serie,ano_letivo,id_professor) VALUES (?,?,?,?)',["2º Ano A $sufixo",$serieA,'2026',$ids['prof']]);
+    $ids['turmaB']=gravar($conn,'INSERT INTO turma(nome_turma,serie,ano_letivo,id_professor) VALUES (?,?,?,?)',["3º Ano A $sufixo",$serieB,'2026',$ids['profOutro']]);
     gravar($conn,'INSERT INTO matricula(id_turma,id_aluno) VALUES (?,?)',[$ids['turmaA'],$ids['alunoA']]);
     gravar($conn,'INSERT INTO matricula(id_turma,id_aluno) VALUES (?,?)',[$ids['turmaB'],$ids['alunoB']]);
     $ids['livro']=gravar($conn,'INSERT INTO livro_didatico(titulo,materia,fonte_url,versao,ativo) VALUES (?,?,?,?,1)',["Livro teste $sufixo",'Matemática','https://example.invalid/livro.pdf',hash('sha256',$sufixo)]);
@@ -77,13 +78,14 @@ try {
     [$codigo,$semCsrf]=coordenacao($coord,'POST',['acao'=>'salvar_conteudo'], $coordToken,'');
     confirmar($codigo===403,'Painel aceitou alteração sem CSRF.');
     [$codigo,$salvo]=coordenacao($coord,'POST',['acao'=>'salvar_conteudo','nome'=>'Função quadrática',
-        'serie'=>'2º Ano','materia'=>'Matemática','bimestre'=>2,'ordem'=>1,
+        'serie'=>$serieA,'materia'=>'Matemática','bimestre'=>2,'ordem'=>1,
         'ativo'=>true,'capitulos'=>[$ids['capitulo']]],$coordToken,$csrf);
     confirmar($codigo===200 && $salvo['id']>0,'Secretaria não classificou capítulo.');
     $ids['conteudo']=$salvo['id'];
     [$codigo,$catalogo]=coordenacao($coord,'GET',['acao'=>'conteudos'],$coordToken);
-    confirmar($codigo===200 && count($catalogo['itens'])===1 &&
-        $catalogo['itens'][0]['bimestre']==2,'Catálogo da secretaria não refletiu a classificação.');
+    $classificado=array_values(array_filter($catalogo['itens'],fn($item)=>(int)$item['id_conteudo']===$ids['conteudo']));
+    confirmar($codigo===200 && count($classificado)===1 &&
+        $classificado[0]['bimestre']==2,'Catálogo da secretaria não refletiu a classificação.');
     $questoes=[];
     for ($i=0;$i<5;$i++) $questoes[]=['enunciado'=>'Questão '.($i+1),'assunto'=>'Função quadrática',
         'alternativas'=>[['ehCorreta'=>true],['ehCorreta'=>false],['ehCorreta'=>false],['ehCorreta'=>false]]];
@@ -97,7 +99,7 @@ try {
     $prof=$pasta.'professor_pedagogico.php';
     [$codigo,$resumoProf]=chamar($prof,['token'=>$tokenProf,'acao'=>'resumo']);
     confirmar($codigo===200 && $resumoProf['turmas_total']===1 && $resumoProf['alunos_total']===1,'Resumo do professor incorreto.');
-    [$codigo]=chamar($pasta.'ranking_serie.php',['token'=>$tokenProf,'serie'=>'3º Ano',
+    [$codigo]=chamar($pasta.'ranking_serie.php',['token'=>$tokenProf,'serie'=>$serieB,
         'mes_referencia'=>date('Y-m')]);
     confirmar($codigo===403,'Professor consultou ranking de série sem vínculo.');
     [$codigo]=chamar($prof,['token'=>$tokenProf,'acao'=>'conteudos','id_turma'=>$ids['turmaB']]);
@@ -135,6 +137,13 @@ try {
         'PDF aceitou assinatura alterada.');
     [$codigo]=chamar($pasta.'gerar_estudo.php',['token'=>$tokenB,'id_capitulo'=>$ids['capitulo'],'id_turma'=>$ids['turmaB']]);
     confirmar($codigo===403,'Geração de capítulo de outra série não foi bloqueada.');
+    [$codigo]=chamar($pasta.'gerar_estudo.php',['token'=>$tokenB,'id_capitulo'=>$ids['capitulo'],
+        'id_turma'=>$ids['turmaB'],'somente_status'=>1]);
+    confirmar($codigo===403,'Status de estudo de outra série não foi bloqueado.');
+    [$codigo,$statusEstudo]=chamar($pasta.'gerar_estudo.php',['token'=>$tokenA,'id_capitulo'=>$ids['capitulo'],
+        'id_turma'=>$ids['turmaA'],'id_conteudo'=>$ids['conteudo'],'somente_status'=>1]);
+    confirmar($codigo===200 && ($statusEstudo['fase'] ?? '')==='aguardando',
+        'Status inicial do estudo autorizado incorreto: HTTP '.$codigo.', fase '.($statusEstudo['fase'] ?? 'ausente'));
     [$codigo,$a]=chamar($base,['token'=>$tokenA]);
     confirmar($codigo===200 && count($a['materias'])===1 && $a['materias'][0]['total']===1,'Matéria da série A não apareceu.');
     [$codigo,$b]=chamar($base,['token'=>$tokenB]);
@@ -177,7 +186,7 @@ try {
     confirmar($pontos===5,'Ranking somou tentativas ou atividade repetida: '.$pontos);
     gravar($conn,'UPDATE ranking SET pontos=20 WHERE id_aluno=? AND id_turma=? AND mes_referencia=?',
         [$ids['alunoA'],$ids['turmaA'],date('Y-m')]);
-    [$codigo,$serieRanking]=chamar($pasta.'ranking_serie.php',['token'=>$tokenA,'serie'=>'2º Ano',
+    [$codigo,$serieRanking]=chamar($pasta.'ranking_serie.php',['token'=>$tokenA,'serie'=>$serieA,
         'mes_referencia'=>date('Y-m')]);
     confirmar($codigo===200 && $serieRanking['ranking'][0]['pontos']===5,
         'Ranking atual exibiu pontos duplicados armazenados antes da correção.');
@@ -188,12 +197,12 @@ try {
     $mesAntigo=date('Y-m',strtotime('first day of last month'));
     gravar($conn,'INSERT INTO ranking(id_aluno,id_turma,pontos,mes_referencia) VALUES (?,?,?,?)',
         [$ids['alunoA'],$ids['turmaA'],7,$mesAntigo]);
-    [$codigo,$anteriorRanking]=chamar($pasta.'ranking_serie.php',['token'=>$tokenA,'serie'=>'2º Ano',
+    [$codigo,$anteriorRanking]=chamar($pasta.'ranking_serie.php',['token'=>$tokenA,'serie'=>$serieA,
         'mes_referencia'=>$mesAntigo]);
     confirmar($codigo===200 && $anteriorRanking['ranking'][0]['pontos']===7,
         'Ranking histórico foi alterado.');
     [$codigo]=coordenacao($coord,'POST',['acao'=>'salvar_conteudo','id'=>$ids['conteudo'],
-        'nome'=>'Função quadrática','serie'=>'3º Ano','materia'=>'Matemática','bimestre'=>2,
+        'nome'=>'Função quadrática','serie'=>$serieB,'materia'=>'Matemática','bimestre'=>2,
         'ordem'=>1,'ativo'=>true,'capitulos'=>[$ids['capitulo']]],$coordToken,$csrf);
     confirmar($codigo===409,'Secretaria alterou a série de um conteúdo com histórico.');
     [$codigo,$atv]=chamar($pasta.'atividades_aluno.php',['token'=>$tokenA]);

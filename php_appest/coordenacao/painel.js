@@ -130,7 +130,7 @@ function revisarLivro(id){
 }
 function renderConteudos(){
   const pendentes=catalogoCapitulos.filter(c=>Number(c.associacoes)===0);
-  const resumo=`${itens.length} conteúdos organizados · ${pendentes.length} capítulos revisados aguardando classificação`;
+  const resumo=`${itens.length} ${itens.length===1?'conteúdo organizado':'conteúdos organizados'} · ${pendentes.length} ${pendentes.length===1?'capítulo revisado aguardando':'capítulos revisados aguardando'} classificação`;
   $('#conteudo').innerHTML=topo('Conteúdos','Organize o que o aluno vê. Os capítulos continuam como fonte interna dos estudos.',seriesConteudo.length?'<button class="primario" id="novo-conteudo">+ Organizar conteúdo</button>':'')+
     `<div class="faixa">${icon('check')}<p><strong>Classificação manual.</strong> Selecione a série e, quando houver, o bimestre. Nenhum capítulo é classificado automaticamente.</p></div>`+
     `<section class="painel"><div class="filtros"><h2>Catálogo pedagógico</h2><span class="quantidade">${esc(resumo)}</span></div>`+
@@ -156,7 +156,7 @@ function formConteudo(atual=null,capituloInicial=0){
     `<label>Matéria<select name="materia" id="materia-conteudo" required><option value="">Selecione a matéria</option>${materias.map(m=>`<option value="${esc(m)}" ${m===materiaInicial?'selected':''}>${esc(m)}</option>`).join('')}</select></label></div>`+
     `<div class="form-duas-colunas"><label>Bimestre<select name="bimestre"><option value="">Sem bimestre definido</option>${[1,2,3,4].map(n=>`<option value="${n}" ${Number(atual?.bimestre)===n?'selected':''}>${n}º bimestre</option>`).join('')}</select></label>`+
     `<label>Ordem de apresentação<input name="ordem" type="number" min="0" max="10000" value="${Number(atual?.ordem||0)}" required></label></div>`+
-    `<label>Capítulos revisados desta matéria<select name="capitulos" id="capitulos-conteudo" size="8" multiple required aria-describedby="ajuda-capitulos"></select><small id="ajuda-capitulos">Use Ctrl ou Shift para selecionar mais de um capítulo. Eles podem pertencer a livros diferentes da mesma matéria.</small></label>`+
+    `<label>Capítulos revisados desta matéria<select name="capitulos" id="capitulos-conteudo" size="8" multiple required aria-describedby="ajuda-capitulos"></select><small id="ajuda-capitulos">No computador, use Ctrl ou Shift para marcar vários; no celular, toque nos capítulos desejados. Eles podem vir de livros diferentes da mesma matéria.</small></label>`+
     `<label class="conteudo-ativo"><input type="checkbox" name="ativo" ${!atual||Number(atual.ativo)?'checked':''}> Disponível para os alunos</label>`,
     async fd=>{
       const capitulos=fd.getAll('capitulos').map(Number);

@@ -121,7 +121,7 @@ class HistoricoActivity : AppCompatActivity() {
             val item = itens[position]
             val acertos = item.getInt("acertos"); val total = item.getInt("total")
             holder.titulo.text = "${item.getString("materia")} · ${item.getString("capitulo")}"
-            holder.detalhe.text = "${item.optString("frente", "")} · ${item.getString("livro")}\n${EstudoUi.data(item.getString("criado_em"))}\n$acertos de $total acertos · ${EstudoUi.percentual(acertos, total)}%\nRevisar respostas ›"
+            holder.detalhe.text = "${item.getString("livro")}\n${EstudoUi.data(item.getString("criado_em"))}\n$acertos de $total acertos · ${EstudoUi.percentual(acertos, total)}%\nRevisar respostas ›"
             holder.card.setOnClickListener {
                 startActivity(Intent(this@HistoricoActivity, RevisaoQuizActivity::class.java).putExtra("ID_QUIZ", item.getInt("id_quiz")))
             }

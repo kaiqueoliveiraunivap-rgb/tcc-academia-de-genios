@@ -81,7 +81,16 @@ class CapitulosActivity : AppCompatActivity() {
                     intent.putExtra("ID_CAPITULO_SELECIONADO", estado.idCapitulo)
                     if (estado.carregando) {
                         lista.removeAllViews(); progresso.visibility = View.VISIBLE
-                        status.text = "Preparando ${estado.titulo}…\nA explicação e as questões usam o conteúdo deste capítulo. Na primeira vez, isso pode levar até dois minutos."
+                        val etapa = when (estado.fase) {
+                            "preparando_material" -> "Preparando o material"
+                            "gerando_conteudo" -> "Gerando a explicação e as questões"
+                            "validando_resposta" -> "Validando o estudo"
+                            "finalizando" -> "Finalizando"
+                            "concluido" -> "Abrindo o estudo"
+                            "erro" -> "A geração falhou"
+                            else -> "Aguardando processamento"
+                        }
+                        status.text = "$etapa: ${estado.titulo}\nNa primeira preparação, isso pode levar alguns minutos."
                     } else estado.resposta?.let { resposta ->
                         progresso.visibility = View.GONE
                         if (resposta.sessaoExpirada) { Sessao.encerrar(this@CapitulosActivity); return@collect }
@@ -133,7 +142,7 @@ class CapitulosActivity : AppCompatActivity() {
         progresso.visibility = View.VISIBLE
         lifecycleScope.launch {
             val resposta = withContext(Dispatchers.IO) {
-                ApiClient.postComStatus(endpoint, params + ("token" to Sessao.token(this@CapitulosActivity)), if (endpoint == "gerar_estudo.php") 115000 else 8000)
+                ApiClient.postComStatus(endpoint, params + ("token" to Sessao.token(this@CapitulosActivity)))
             }
             ocupado = false
             progresso.visibility = View.GONE

@@ -117,7 +117,7 @@ class LoginActivity : AppCompatActivity() {
                 botoesPerfil().forEach { it.isEnabled = true }
 
                 if (resposta.corpo == null) {
-                    status.text = "Não foi possível conectar à API. Execute o app pelo Android Studio para iniciar o servidor local."
+                    status.text = "Não foi possível conectar. Verifique sua conexão e tente novamente."
                     return@launch
                 }
 

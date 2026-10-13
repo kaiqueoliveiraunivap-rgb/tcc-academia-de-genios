@@ -121,6 +121,9 @@ input, select, textarea { min-height: 46px; padding: 11px 13px; border-radius: 1
   .login-formulario { display: block; min-height: auto; padding: 42px 25px 58px; }
 }
 @media (max-width: 480px) {
+  .topbar > span { font-size: 0; white-space: nowrap; }
+  .topbar .separador { display: none; }
+  .topbar #local-atual { font-size: 12px; }
   .estatisticas { gap: 9px; }
   .estatistica strong { font-size: 30px; }
   .filtros { align-items: stretch; flex-direction: column; }

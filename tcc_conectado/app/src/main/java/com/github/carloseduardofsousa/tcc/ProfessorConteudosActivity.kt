@@ -88,7 +88,8 @@ class ProfessorConteudosActivity : AppCompatActivity() {
             }
             val turma=json.getJSONObject("turma")
             val itens=json.getJSONArray("conteudos")
-            status.text="${turma.optString("serie")} · ${turma.optString("ano_letivo")} · ${itens.length()} conteúdos"
+            val quantidade=itens.length()
+            status.text="${turma.optString("serie")} · ${turma.optString("ano_letivo")} · $quantidade ${if (quantidade==1) "conteúdo" else "conteúdos"}"
             if (itens.length()==0) {
                 lista.addView(TextView(this@ProfessorConteudosActivity).apply {
                     text="A secretaria ainda não classificou conteúdos revisados para esta série."

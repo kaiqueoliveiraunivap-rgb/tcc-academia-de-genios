@@ -74,17 +74,19 @@ dependencies {
 
 val iniciarApiLocal = System.getProperty("os.name").startsWith("Windows") &&
     apiBaseUrl == "http://10.0.2.2:8088/php_appest/" &&
-    providers.gradleProperty("skipLocalApi").orNull != "true"
+    providers.gradleProperty("startLocalApi").orNull == "true"
 val scriptApiLocal = rootProject.file("../iniciar-local.ps1").absolutePath
 
 tasks.register<Exec>("prepararAmbienteLocal") {
     group = "development"
-    description = "Inicia a API e o MySQL locais para o emulador Android."
+    description = "Inicia a API e o MySQL locais somente com -PstartLocalApi=true. Pode executar o instalador."
     enabled = iniciarApiLocal
     commandLine("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
         scriptApiLocal, "-Rapido")
 }
 
-tasks.matching { it.name == "preDebugBuild" }.configureEach {
-    dependsOn("prepararAmbienteLocal")
+if (iniciarApiLocal) {
+    tasks.matching { it.name == "preDebugBuild" }.configureEach {
+        dependsOn("prepararAmbienteLocal")
+    }
 }

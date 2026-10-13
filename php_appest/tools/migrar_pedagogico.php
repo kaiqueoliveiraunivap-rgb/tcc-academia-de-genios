@@ -20,6 +20,27 @@ $conn->query("CREATE TABLE IF NOT EXISTS conteudo_pedagogico (
     CONSTRAINT ck_conteudo_bimestre CHECK (bimestre IS NULL OR bimestre BETWEEN 1 AND 4)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+// O esquema legado pode usar collations diferentes para série e matéria.
+// Igualar apenas as colunas comparadas evita falhas nas junções sem alterar
+// turma, livro ou qualquer registro existente.
+foreach (['serie'=>['turma','serie'],'materia'=>['livro_didatico','materia']] as $coluna=>[$tabelaLegada,$colunaLegada]) {
+    $consultar=function (string $tabela,string $campo) use ($conn): string {
+        $s=$conn->prepare('SELECT COLLATION_NAME FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? AND COLUMN_NAME=?');
+        $s->bind_param('ss',$tabela,$campo); $s->execute();
+        $collation=(string)($s->get_result()->fetch_assoc()['COLLATION_NAME'] ?? ''); $s->close();
+        return $collation;
+    };
+    $legada=$consultar($tabelaLegada,$colunaLegada);
+    if ($legada!==$consultar('conteudo_pedagogico',$coluna)) {
+        if (!preg_match('/^utf8mb4_[a-z0-9_]+$/D',$legada)) {
+            throw new RuntimeException("Collation não suportada em $tabelaLegada.$colunaLegada.");
+        }
+        $conn->query("ALTER TABLE conteudo_pedagogico MODIFY COLUMN $coluna VARCHAR(80)
+            CHARACTER SET utf8mb4 COLLATE $legada NOT NULL");
+    }
+}
+
 $conn->query("CREATE TABLE IF NOT EXISTS conteudo_capitulo (
     id_conteudo INT NOT NULL,
     id_capitulo INT NOT NULL,
@@ -80,6 +101,15 @@ $conn->query("CREATE TABLE IF NOT EXISTS ranking_melhor_conteudo (
     PRIMARY KEY (id_aluno,id_turma,mes_referencia,chave_conteudo),
     FOREIGN KEY (id_aluno) REFERENCES usuario(id_usuario),
     FOREIGN KEY (id_turma) REFERENCES turma(id_turma)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+// Estado transitório de uma geração síncrona. A chave não contém dados do
+// aluno; requisições do mesmo material compartilham o processamento/cache.
+$conn->query("CREATE TABLE IF NOT EXISTS estado_preparacao_estudo (
+    chave CHAR(64) PRIMARY KEY,
+    fase VARCHAR(32) NOT NULL,
+    atualizado_em DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    INDEX idx_preparacao_atualizado (atualizado_em)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 // O quiz antigo continua válido; o vínculo novo identifica qual conteúdo

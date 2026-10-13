@@ -32,6 +32,11 @@ function motivoSeguroRetryEstudo(Throwable $erro): string {
     if ($erro instanceof JsonException) return 'json_invalido';
     return 'falha_'.(new ReflectionClass($erro))->getShortName();
 }
+
+function atualizarFaseEstudo(mysqli $conn, string $chave, string $fase): void {
+    $s=$conn->prepare('INSERT INTO estado_preparacao_estudo (chave,fase) VALUES (?,?) ON DUPLICATE KEY UPDATE fase=VALUES(fase), atualizado_em=CURRENT_TIMESTAMP(6)');
+    $s->bind_param('ss',$chave,$fase); $s->execute(); $s->close();
+}
 try {
     $stmt=$conn->prepare('SELECT c.*, l.titulo AS livro, l.materia, l.fonte_url FROM capitulo_livro c JOIN livro_didatico l ON l.id_livro=c.id_livro WHERE c.id_capitulo=? AND c.revisado=1 AND l.ativo=1');
     $stmt->bind_param('i',$id); $stmt->execute();
@@ -62,9 +67,8 @@ try {
         $s->bind_param('i',$id); $s->execute(); $classificado=$s->get_result()->num_rows>0; $s->close();
         if ($classificado) responderErro('Conteúdo indisponível para sua série.',403);
     }
-    $paginas=json_decode($cap['paginas_json'],true,512,JSON_THROW_ON_ERROR);
     // Nunca truncar o capítulo silenciosamente.
-    if (!$paginas || strlen($cap['paginas_json'])>180000) responderErro('Capítulo sem texto ou muito extenso. Solicite a revisão/divisão do conteúdo.',422);
+    if (!$cap['paginas_json'] || strlen($cap['paginas_json'])>180000) responderErro('Capítulo sem texto ou muito extenso. Solicite a revisão/divisão do conteúdo.',422);
     $model=configuracao('GEMINI_MODEL');
     if (!$model || !preg_match('/^[a-zA-Z0-9.\-]+$/',$model)) responderErro('Configure GEMINI_MODEL no servidor.',503);
     $orientacao=orientacaoDaTurma($conn,$idTurma,$cap['materia'],(int)$cap['id_livro'],$idConteudo);
@@ -72,20 +76,28 @@ try {
     // Nova explicação, edição do capítulo ou orientação exigem um novo estudo.
     // O resultado personalizado é compartilhado somente pela turma destinatária.
     $versao=versaoEstudoCompleto($model,$cap['paginas_json'],$idPrompt);
-    $lockName='estudo:'.hash('sha256',$id.'|'.$versao);
+    $chaveEstudo=hash('sha256',$id.'|'.$versao);
+    $lockName='estudo:'.$chaveEstudo;
     $lockName=substr($lockName,0,64);
     $s=$conn->prepare('SELECT id_estudo,conteudo_json FROM estudo_gerado WHERE id_capitulo=? AND dificuldade=? AND versao_gerador=?');
     $s->bind_param('iss',$id,$nivel,$versao); $s->execute(); $cache=$s->get_result()->fetch_assoc();
+    if (isset($_POST['somente_status'])) {
+        if ($cache) responderJson(['status'=>'sucesso','fase'=>'concluido']);
+        $s=$conn->prepare('SELECT fase FROM estado_preparacao_estudo WHERE chave=? AND atualizado_em > NOW(6) - INTERVAL 4 MINUTE');
+        $s->bind_param('s',$chaveEstudo); $s->execute(); $fase=$s->get_result()->fetch_assoc()['fase'] ?? 'aguardando';
+        responderJson(['status'=>'sucesso','fase'=>$fase]);
+    }
+    $paginas=json_decode($cap['paginas_json'],true,512,JSON_THROW_ON_ERROR);
+    if (!$paginas) responderErro('Capítulo sem texto. Solicite a revisão do conteúdo.',422);
     if (!$cache) {
-        // Vários alunos podem pedir o mesmo capítulo ao mesmo tempo. Quem chega
-        // depois aguarda a primeira geração e reutiliza o resultado validado.
-        $inicioEspera=microtime(true);
-        $s=$conn->prepare('SELECT GET_LOCK(?, 45) AS adquirido'); $s->bind_param('s',$lockName); $s->execute();
+        // A segunda chamada acompanha a primeira sem ocupar um worker PHP nem
+        // iniciar outra requisição Gemini. O app consulta o estado e busca o cache.
+        $s=$conn->prepare('SELECT GET_LOCK(?, 0) AS adquirido'); $s->bind_param('s',$lockName); $s->execute();
         $lock=(int)$s->get_result()->fetch_assoc()['adquirido']===1;
-        if (!$lock) responderErro('Este estudo está sendo preparado. Tente novamente em instantes.',409);
+        if (!$lock) responderJson(['status'=>'processando','fase'=>'aguardando'],202);
+        atualizarFaseEstudo($conn,$chaveEstudo,'aguardando');
         $s=$conn->prepare('SELECT id_estudo,conteudo_json FROM estudo_gerado WHERE id_capitulo=? AND dificuldade=? AND versao_gerador=?');
         $s->bind_param('iss',$id,$nivel,$versao); $s->execute(); $cache=$s->get_result()->fetch_assoc();
-        if (!$cache && microtime(true)-$inicioEspera>5) throw new RuntimeException('A geração simultânea não produziu um estudo válido.');
     }
     if ($cache) {
         $idEstudo=(int)$cache['id_estudo'];
@@ -93,6 +105,7 @@ try {
     }
     else {
         $origemGeracao='nova';
+        atualizarFaseEstudo($conn,$chaveEstudo,'preparando_material');
         $key=configuracao('GEMINI_API_KEY');
         if (!$key) throw new RuntimeException('Chave da IA não configurada no servidor.');
         $fontesPreparadas=prepararFontesEstudo($paginas);
@@ -121,6 +134,7 @@ try {
             $corpoTentativa=$body;
             if ($tentativa>0) $corpoTentativa['contents'][0]['parts'][0]['text']=$entrada."\n\nCorreção obrigatória: ".mb_substr($falha->getMessage(),0,280)." Retorne o JSON completo, com 8 blocos de ao menos {$porBloco} palavras e todas as regras acima.";
             try {
+                atualizarFaseEstudo($conn,$chaveEstudo,'gerando_conteudo');
                 $ch=curl_init('https://generativelanguage.googleapis.com/v1beta/models/'.$model.':generateContent');
                 curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>10,CURLOPT_TIMEOUT=>90,CURLOPT_HTTPHEADER=>['Content-Type: application/json','x-goog-api-key: '.$key],CURLOPT_POSTFIELDS=>json_encode($corpoTentativa,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)]);
                 $raw=curl_exec($ch); $http=curl_getinfo($ch,CURLINFO_HTTP_CODE); $curlError=curl_error($ch); curl_close($ch);
@@ -137,6 +151,7 @@ try {
                 if (($candidate['finishReason'] ?? '')!=='STOP') throw new RuntimeException('Geração incompleta.');
                 $text=''; foreach ($candidate['content']['parts'] ?? [] as $part) if (empty($part['thought'])) $text.=$part['text'] ?? '';
                 $usoGemini=$res['usageMetadata'] ?? [];
+                atualizarFaseEstudo($conn,$chaveEstudo,'validando_resposta');
                 $dados=validarEstudoCompleto(resolverReferenciasEstudo(json_decode($text,true,512,JSON_THROW_ON_ERROR),$fontesPreparadas),$paginas);
                 $falha=null;
                 break;
@@ -147,11 +162,13 @@ try {
             }
         }
         if ($falha) throw $falha;
+        atualizarFaseEstudo($conn,$chaveEstudo,'finalizando');
         $json=json_encode($dados,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
         $turmaDestinataria=$idPrompt ? $idTurma : null;
         $s=$conn->prepare('INSERT INTO estudo_gerado (id_capitulo,dificuldade,versao_gerador,conteudo_json,id_turma_destinataria) VALUES (?,?,?,?,?)');
         $s->bind_param('isssi',$id,$nivel,$versao,$json,$turmaDestinataria); $s->execute();
         $idEstudo=(int)$conn->insert_id;
+        atualizarFaseEstudo($conn,$chaveEstudo,'concluido');
         registrarMetricasGeracaoEstudo(['origem'=>$origemGeracao,'duracao_ms'=>(int)((microtime(true)-$inicioRequisicao)*1000),'entrada_caracteres'=>mb_strlen($entrada),'saida_caracteres'=>mb_strlen($json),'modelo'=>$model,'tentativas'=>$tentativas,'retry'=>$tentativas>1,'motivo_retry'=>$tentativas>1 ? $motivoRetry : null,'uso'=>$usoGemini]);
     }
     validarEstudoCompleto($dados,$paginas);
@@ -159,6 +176,9 @@ try {
     $resposta=['status'=>'sucesso','id_estudo'=>$idEstudo,'id_turma'=>$idTurma,'dificuldade'=>$nivel,'estudo'=>$dados,'livro'=>$cap['livro'],'capitulo'=>$cap['titulo'],'fonte_url'=>urlPdfParaAluno($conn,$cap['fonte_url'],(int)$aluno['id_usuario'],$_POST['token']),
         'bimestre'=>$orientacao['bimestre'] ?? null,'orientacao_professor'=>$orientacao ? ['professor'=>$orientacao['nome_professor'],'instrucao'=>$orientacao['instrucao']] : null];
 } catch (Throwable $e) {
+    if (isset($chaveEstudo) && $origemGeracao==='nova') {
+        try { atualizarFaseEstudo($conn,$chaveEstudo,'erro'); } catch (Throwable $ignorado) { /* preserva a falha original */ }
+    }
     error_log('Falha estudo: '.get_class($e).' — '.$e->getMessage());
     $mensagem=str_contains($e->getMessage(),'HTTP 0,')
         ? 'O servidor não conseguiu se conectar à IA. Verifique a conexão com a internet e tente novamente.'

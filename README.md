@@ -6,7 +6,7 @@ O aplicativo Android atende alunos e professores. A secretaria usa um site separ
 
 ## Executar no emulador
 
-Abra `tcc_conectado` no Android Studio e clique em Run com um emulador selecionado. No Windows, o build debug inicia o MySQL e a API PHP locais automaticamente; o emulador acessa a API por `10.0.2.2`. Se quiser iniciar a API sem compilar, execute `./iniciar-local.ps1`. Veja [EXECUTAR.md](EXECUTAR.md) para login, contas locais e detalhes do ambiente.
+Abra `tcc_conectado` no Android Studio e clique em Run com um emulador selecionado. Inicie a API local explicitamente com `./iniciar-local.ps1 -Xampp C:\xampp` (ou o caminho do seu XAMPP); o emulador a acessa por `10.0.2.2`. Uma simples compilação não inicia serviços nem executa o instalador. Veja [EXECUTAR.md](EXECUTAR.md) para login, contas locais e detalhes do ambiente.
 
 **Em outro computador**, siga primeiro [PREPARAR_OUTRO_PC.md](PREPARAR_OUTRO_PC.md). O clone contém código, estrutura do banco e catálogo de livros; cada máquina cria seu próprio banco e suas próprias contas de demonstração. A chave da IA fica em `config.local.php` e precisa ser configurada separadamente.
 
@@ -16,7 +16,7 @@ A chave Gemini e o modelo ficam em `config.local.php`, fora da pasta pública `p
 
 ## Desempenho e uso da IA
 
-O estudo gerado é compartilhado por capítulo, versão do conteúdo, modelo, dificuldade e orientação vigente da turma. Assim, uma nova chamada à Gemini só acontece quando essa combinação ainda não existe; alunos que abrirem o mesmo capítulo aguardam o mesmo lock do banco e reutilizam o resultado validado. Alterar de fato a orientação cria uma nova versão; reenviar a mesma orientação mantém o cache.
+O estudo gerado é compartilhado por capítulo, versão do conteúdo, modelo, dificuldade e orientação vigente da turma. Assim, uma nova chamada à Gemini só acontece quando essa combinação ainda não existe; alunos que abrirem o mesmo capítulo acompanham o processamento em curso e reutilizam o resultado validado. Alterar de fato a orientação cria uma nova versão; reenviar a mesma orientação mantém o cache.
 
 O texto do livro continua sendo normalizado e enviado integralmente em trechos rastreáveis, sem cortar conteúdo de forma silenciosa. O prompt e a resposta estruturada foram compactados, e uma nova tentativa reenvia somente a fonte original e o motivo curto da validação — nunca a resposta inválida inteira. Nos logs do servidor são registrados apenas metadados seguros de desenvolvimento (origem cache/nova, duração, caracteres, modelo, retry e uso retornado pela API), sem chave, token ou conteúdo do aluno.
 

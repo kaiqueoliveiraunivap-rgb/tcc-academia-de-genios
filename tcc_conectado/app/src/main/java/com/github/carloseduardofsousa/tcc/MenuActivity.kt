@@ -139,15 +139,17 @@ class MenuActivity : AppCompatActivity() {
                         letterSpacing=.08f; setTextColor(getColor(R.color.Destaque))
                     })
                     addView(TextView(this@MenuActivity).apply {
-                        text=if(total>0) "$feitos de $total conteúdos concluídos" else "Conteúdos em preparação"
+                        text=if(total>0) "Conteúdos concluídos: $feitos de $total" else "Conteúdos em preparação"
                         textSize=17f; typeface=Typeface.DEFAULT_BOLD
                         setTextColor(getColor(R.color.TextoPrincipal)); setPadding(0,dp(8),0,dp(9))
                     })
                     if (total>0) addView(ProgressBar(this@MenuActivity,null,android.R.attr.progressBarStyleHorizontal).apply {
-                        max=total; progress=feitos; contentDescription="$feitos de $total conteúdos concluídos"
+                        max=total; progress=feitos; contentDescription="Conteúdos concluídos: $feitos de $total"
                     },LinearLayout.LayoutParams(-1,dp(8)).apply { bottomMargin=dp(11) })
                     addView(TextView(this@MenuActivity).apply {
-                        text="$quizzes quizzes realizados · $media\n${json.optInt("atividades_pendentes")} atividades pendentes"
+                        val pendentes=json.optInt("atividades_pendentes")
+                        text="${if (quizzes==1) "1 quiz realizado" else "$quizzes quizzes realizados"} · $media\n"+
+                            if (pendentes==1) "1 atividade pendente" else "$pendentes atividades pendentes"
                         textSize=14f; setTextColor(getColor(R.color.TextoSecundario))
                     })
                 })

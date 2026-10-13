@@ -16,7 +16,7 @@ header('Referrer-Policy: no-referrer');
 <div id="inicial" class="carregando" role="status">Abrindo a Academia de Gênios…</div>
 <section id="login" class="login" hidden>
   <div class="login-historia">
-    <a class="marca" href="./"><span class="simbolo" aria-hidden="true">AG</span><span>Academia<br>de Gênios</span></a>
+    <a class="marca" href="./"><span class="simbolo" aria-hidden="true">AG</span><span>Academia<br> de Gênios</span></a>
     <div class="historia-texto"><span class="sobretitulo claro">ESPAÇO DA COORDENAÇÃO</span><h1>Uma escola organizada.<br>Mais espaço para aprender.</h1><p>Pessoas, turmas e livros conectados à jornada de cada aluno.</p></div>
     <div class="livros-ilustracao" aria-hidden="true"><span>Conhecer</span><span>Aprender</span><span>Transformar</span></div>
     <small>Gestão escolar que acompanha o aprendizado.</small>
@@ -34,7 +34,7 @@ header('Referrer-Policy: no-referrer');
 </section>
 <div id="app" class="app" hidden>
   <aside class="sidebar">
-    <a class="marca" href="#inicio"><span class="simbolo" aria-hidden="true">AG</span><span>Academia<br>de Gênios</span></a>
+    <a class="marca" href="#inicio"><span class="simbolo" aria-hidden="true">AG</span><span>Academia<br> de Gênios</span></a>
     <span class="rotulo-nav">GESTÃO DA ESCOLA</span>
     <nav aria-label="Menu principal">
       <button data-page="inicio">Visão geral</button><button data-page="aluno">Alunos</button><button data-page="professor">Professores</button><button data-page="turmas">Turmas</button><button data-page="conteudos">Conteúdos</button><button data-page="livros">Biblioteca</button><button data-page="admin">Equipe da secretaria</button><button data-page="configuracoes">Configurações</button>
