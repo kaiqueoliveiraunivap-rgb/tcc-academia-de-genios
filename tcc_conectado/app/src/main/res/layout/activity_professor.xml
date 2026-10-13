@@ -64,13 +64,24 @@
         android:id="@+id/btnAbrirDashboard"
         android:layout_width="match_parent"
         android:layout_height="52dp"
-        android:text="Ver desempenho das turmas"
+        android:text="Notas e avaliações escolares"
         android:textAllCaps="false"
         android:textSize="15sp"
         android:textStyle="bold"
         android:textColor="@color/BackGround"
         android:backgroundTint="@color/btnSelecionado"
         android:layout_marginBottom="25dp" />
+
+    <TextView
+        android:id="@+id/txtIndicadoresProfessor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="22dp"
+        android:background="@drawable/bg_menu_profile"
+        android:padding="16dp"
+        android:text="Carregando indicadores..."
+        android:textColor="@color/TextoPrincipal"
+        android:textSize="14sp" />
 
     <TextView
         android:layout_width="match_parent"

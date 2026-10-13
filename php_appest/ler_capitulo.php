@@ -19,6 +19,20 @@ $capitulo = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 if (!$capitulo) responderErro('Capítulo não disponível para leitura.', 404);
 
+// Capítulos classificados só podem ser lidos por alunos da série vinculada.
+// Capítulos ainda sem classificação continuam no fluxo legado de transição.
+$s=$conn->prepare('SELECT 1 FROM conteudo_capitulo cc JOIN conteudo_pedagogico cp ON cp.id_conteudo=cc.id_conteudo
+    WHERE cc.id_capitulo=? LIMIT 1');
+$s->bind_param('i',$id); $s->execute(); $classificado=$s->get_result()->num_rows>0; $s->close();
+if ($classificado) {
+    $s=$conn->prepare('SELECT 1 FROM conteudo_capitulo cc JOIN conteudo_pedagogico cp ON cp.id_conteudo=cc.id_conteudo
+        JOIN turma t ON t.serie=cp.serie JOIN matricula m ON m.id_turma=t.id_turma AND m.id_aluno=?
+        WHERE cc.id_capitulo=? AND cp.ativo=1 AND cp.materia=? LIMIT 1');
+    $s->bind_param('iis',$aluno['id_usuario'],$id,$capitulo['materia']);
+    $s->execute(); $permitido=$s->get_result()->num_rows>0; $s->close();
+    if (!$permitido) responderErro('Conteúdo indisponível para sua série.',403);
+}
+
 $paginas = json_decode($capitulo['paginas_json'], true);
 if (!is_array($paginas) || !$paginas) responderErro('Este capítulo ainda não possui páginas legíveis.', 422);
 

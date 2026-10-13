@@ -16,13 +16,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.json.JSONArray
+import org.json.JSONObject
 
 // ── Modelo ───────────────────────────────────────────────────
 data class TurmaItem(
     val idTurma: Int,
     val nomeTurma: String,
+    val serie: String,
     val anoLetivo: String,
-    val totalAlunos: Int
+    val totalAlunos: Int,
+    val atividades: Int
 )
 
 // ── Adapter da lista de turmas ──────────────────────────────
@@ -64,13 +67,14 @@ class TurmaAdapter(
         val card = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(28, 26, 28, 26)
+            val d=ctx.resources.displayMetrics.density
+            setPadding((18*d).toInt(),(17*d).toInt(),(18*d).toInt(),(17*d).toInt())
             layoutParams = ViewGroup.MarginLayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0, 0, 0, 14) }
+            ).apply { setMargins(0, 0, 0, (11*d).toInt()) }
             background = GradientDrawable().apply {
-                cornerRadius = 18f
+                cornerRadius = 16*d
                 setColor(UiPaleta.superficie())
             }
             addView(textos)
@@ -82,9 +86,9 @@ class TurmaAdapter(
     override fun onBindViewHolder(h: VH, position: Int) {
         val item = items[position]
         val textos = h.card.getChildAt(0) as LinearLayout
-        (textos.getChildAt(0) as TextView).text = "👥  ${item.nomeTurma}"
+        (textos.getChildAt(0) as TextView).text = item.nomeTurma
         (textos.getChildAt(1) as TextView).text =
-            "Ano letivo ${item.anoLetivo} · ${item.totalAlunos} aluno${if (item.totalAlunos == 1) "" else "s"}"
+            "${item.serie} · ${item.anoLetivo} · ${item.totalAlunos} alunos · ${item.atividades} atividades"
         h.card.setOnClickListener { onClick(item) }
     }
 
@@ -147,8 +151,8 @@ class ProfessorActivity : AppCompatActivity() {
             // Quem é o professor é resolvido pelo servidor a partir do token;
             // o id não é mais enviado porque o backend o ignoraria de qualquer forma.
             val resposta = ApiClient.postComStatus(
-                "listar_turmas_professor.php",
-                mapOf("token" to Sessao.token(this))
+                "professor_pedagogico.php",
+                mapOf("token" to Sessao.token(this),"acao" to "resumo")
             )
 
             runOnUiThread {
@@ -166,7 +170,13 @@ class ProfessorActivity : AppCompatActivity() {
                     return@runOnUiThread
                 }
 
-                val json = try { JSONArray(resposta.corpo) } catch (e: Exception) { JSONArray() }
+                val dados = try { JSONObject(resposta.corpo.orEmpty()) } catch (e: Exception) { JSONObject() }
+                val json = dados.optJSONArray("turmas") ?: JSONArray()
+                val media=if (dados.isNull("aproveitamento_medio")) "Sem quizzes ainda"
+                    else "${dados.optDouble("aproveitamento_medio").toInt()}% de aproveitamento nos quizzes"
+                findViewById<TextView>(R.id.txtIndicadoresProfessor).text =
+                    "${dados.optInt("turmas_total")} turmas · ${dados.optInt("alunos_total")} alunos\n"+
+                    "${dados.optInt("atividades_publicadas")} atividades publicadas · ${dados.optInt("atividades_concluidas")} conclusões\n$media"
 
                 if (json.length() == 0) {
                     txtVazio.visibility = View.VISIBLE
@@ -178,13 +188,15 @@ class ProfessorActivity : AppCompatActivity() {
                     TurmaItem(
                         idTurma     = item.getInt("id_turma"),
                         nomeTurma   = item.getString("nome_turma"),
+                        serie       = item.optString("serie"),
                         anoLetivo   = item.getString("ano_letivo"),
-                        totalAlunos = item.getInt("total_alunos")
+                        totalAlunos = item.getInt("alunos"),
+                        atividades  = item.getInt("atividades")
                     )
                 }
 
                 rvTurmas.adapter = TurmaAdapter(turmas) { turma ->
-                    val intent = Intent(this, EnviarPromptActivity::class.java)
+                    val intent = Intent(this, ProfessorConteudosActivity::class.java)
                     intent.putExtra("ID_TURMA", turma.idTurma)
                     intent.putExtra("NOME_TURMA", turma.nomeTurma)
                     intent.putExtra("TOTAL_ALUNOS", turma.totalAlunos)

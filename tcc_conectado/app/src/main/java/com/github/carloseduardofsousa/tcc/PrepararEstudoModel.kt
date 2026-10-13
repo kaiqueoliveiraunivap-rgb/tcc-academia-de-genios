@@ -17,12 +17,13 @@ class PrepararEstudoModel : ViewModel() {
     private val escopo = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val atual = MutableStateFlow(PreparacaoEstudo())
     val estado = atual.asStateFlow()
-    fun gerar(token: String, idCapitulo: Int, titulo: String, idTurma: Int) {
+    fun gerar(token: String, idCapitulo: Int, titulo: String, idTurma: Int, idConteudo: Int = 0) {
         if (atual.value.carregando) return
         atual.value = PreparacaoEstudo(idCapitulo, titulo, true)
         escopo.launch {
             val params = mutableMapOf("token" to token, "id_capitulo" to idCapitulo.toString())
             if (idTurma > 0) params["id_turma"] = idTurma.toString()
+            if (idConteudo > 0) params["id_conteudo"] = idConteudo.toString()
             val resposta = withContext(Dispatchers.IO) { ApiClient.postComStatus("gerar_estudo.php", params, 115000) }
             atual.value = PreparacaoEstudo(idCapitulo, titulo, false, resposta)
         }

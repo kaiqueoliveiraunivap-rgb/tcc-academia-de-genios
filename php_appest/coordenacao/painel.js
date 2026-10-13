@@ -1,14 +1,14 @@
 'use strict';
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const desenhos={inicio:'M3 10 12 3l9 7v11H3z M9 21v-8h6v8',aluno:'m2 8 10-5 10 5-10 5z M6 10v7q6 5 12 0v-7 M22 8v9',professor:'M4 3h16v13H4z M9 21l3-5 3 5 M8 7h8 M8 11h5',turmas:'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',livros:'M12 5q-5-3-10 0v15q5-3 10 0 5-3 10 0V5q-5-3-10 0z M12 5v15',admin:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M18 8a3 3 0 0 1 0 6 M22 21v-2a4 4 0 0 0-3-4',busca:'M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',app:'M7 2h10v20H7z M11 18h2',check:'m4 12 5 5L20 6'};
+const desenhos={inicio:'M3 10 12 3l9 7v11H3z M9 21v-8h6v8',aluno:'m2 8 10-5 10 5-10 5z M6 10v7q6 5 12 0v-7 M22 8v9',professor:'M4 3h16v13H4z M9 21l3-5 3 5 M8 7h8 M8 11h5',turmas:'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',conteudos:'M4 5h16 M4 10h16 M4 15h12 M4 20h12',livros:'M12 5q-5-3-10 0v15q5-3 10 0 5-3 10 0V5q-5-3-10 0z M12 5v15',admin:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 1 0 6 M22 21v-2a4 4 0 0 0-3-4',busca:'M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',app:'M7 2h10v20H7z M11 18h2',check:'m4 12 5 5L20 6'};
 const icon=n=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${desenhos[n]||desenhos.inicio}"/></svg>`;
-const nomes={inicio:'Visão geral',aluno:'Alunos',professor:'Professores',turmas:'Turmas',livros:'Biblioteca',admin:'Equipe da secretaria',configuracoes:'Configurações'};
+const nomes={inicio:'Visão geral',aluno:'Alunos',professor:'Professores',turmas:'Turmas',conteudos:'Conteúdos',livros:'Biblioteca',admin:'Equipe da secretaria',configuracoes:'Configurações'};
 desenhos.configuracoes='M12 3v2 M12 19v2 M3 12h2 M19 12h2 M5.6 5.6 7 7 M17 17l1.4 1.4 M18.4 5.6 17 7 M7 17l-1.4 1.4 M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0';
 const temaSalvo=localStorage.getItem('tema-coordenacao');
 function aplicarTema(tema){const valor=['claro','escuro'].includes(tema)?tema:'claro';document.documentElement.dataset.theme=valor;localStorage.setItem('tema-coordenacao',valor);document.querySelector('meta[name="theme-color"]').content=valor==='escuro'?'#161927':'#242457';}
 aplicarTema(temaSalvo);
-let sessao=null,csrf='',pagina='inicio',itens=[],turmas=[],professores=[],numeroPagina=0,consulta='',sequencia=0,temporizador=null,submitModal=null,toastTimer=null;
+let sessao=null,csrf='',pagina='inicio',itens=[],turmas=[],professores=[],catalogoCapitulos=[],seriesConteudo=[],numeroPagina=0,consulta='',sequencia=0,temporizador=null,submitModal=null,toastTimer=null;
 document.querySelectorAll('[data-page]').forEach(b=>{b.insertAdjacentHTML('afterbegin',icon(b.dataset.page));b.addEventListener('click',()=>ir(b.dataset.page));});
 function erro(el,msg){el.textContent=msg;el.hidden=!msg;}
 function aviso(msg){$('#toast').textContent=msg;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,5000);}
@@ -40,6 +40,7 @@ async function carregar(){
     else if(['aluno','professor','admin'].includes(pagina)){
       const [d,t]=await Promise.all([get('usuarios',{perfil:pagina,q:consulta,pagina:numeroPagina}),api('turmas')]);if(seq!==sequencia)return;itens=d.itens;turmas=t.itens;professores=t.professores;renderUsuarios(d);
     }else if(pagina==='turmas'){const t=await api('turmas');if(seq!==sequencia)return;turmas=t.itens;professores=t.professores;renderTurmas();}
+    else if(pagina==='conteudos'){const d=await api('conteudos');if(seq!==sequencia)return;itens=d.itens;catalogoCapitulos=d.capitulos;seriesConteudo=d.series;renderConteudos();}
     else if(pagina==='configuracoes'){renderConfiguracoes();}
     else{const d=await api('livros');if(seq!==sequencia)return;itens=d.itens;renderLivros(d);if(d.pendentes.some(p=>['fila','processando'].includes(p.estado))&&!document.hidden)temporizador=setTimeout(()=>{if(!$('#modal').open)carregar();else temporizador=setTimeout(()=>{if(pagina==='livros')carregar();},10000);},5000);}
   }catch(e){if(seq===sequencia&&sessao){root.innerHTML=topo(nomes[pagina],'')+`<div class="erro" role="alert">${esc(e.message)}</div><button class="secundario" id="tentar">Tentar novamente</button>`;$('#tentar').onclick=carregar;}}
@@ -127,4 +128,50 @@ function formLivro(){
 function revisarLivro(id){
   abrirModal('Revisar divisão do livro',`<p class="dica">Informe as páginas físicas do PDF, contando a capa como página 1. Os intervalos devem estar em ordem e não podem se sobrepor. Inclua somente o conteúdo do capítulo, sem gabaritos.</p><label>Frente; título do capítulo; página inicial; página final<textarea name="mapa" rows="8" required placeholder="Frente única; Capítulo 1 — Introdução; 3; 18&#10;Frente única; Capítulo 2 — Conceitos; 19; 32"></textarea><small>Uma linha por capítulo. Para livros com várias frentes, informe Frente 1, Frente 2 etc. nos capítulos correspondentes.</small></label><div class="aviso">Esta revisão resolve PDFs sem marcadores. Quando não houver texto selecionável, o PDF precisa passar por OCR antes de ser reenviado.</div>`,async fd=>{const mapa=fd.get('mapa').trim().split(/\r?\n/).map((l,i)=>{const p=l.split(';').map(x=>x.trim());if(p.length!==4||!/^\d+$/.test(p[2])||!/^\d+$/.test(p[3]))throw new Error(`Confira a linha ${i+1}. Use quatro campos separados por ponto e vírgula.`);return {frente:p[0],titulo:p[1],inicio:Number(p[2]),fim:Number(p[3])};});await api('reprocessar_livro',{id,mapa});$('#modal').close();aviso('Revisão enviada para processamento.');carregar();},'Salvar e reprocessar');
 }
+function renderConteudos(){
+  const pendentes=catalogoCapitulos.filter(c=>Number(c.associacoes)===0);
+  const resumo=`${itens.length} conteúdos organizados · ${pendentes.length} capítulos revisados aguardando classificação`;
+  $('#conteudo').innerHTML=topo('Conteúdos','Organize o que o aluno vê. Os capítulos continuam como fonte interna dos estudos.',seriesConteudo.length?'<button class="primario" id="novo-conteudo">+ Organizar conteúdo</button>':'')+
+    `<div class="faixa">${icon('check')}<p><strong>Classificação manual.</strong> Selecione a série e, quando houver, o bimestre. Nenhum capítulo é classificado automaticamente.</p></div>`+
+    `<section class="painel"><div class="filtros"><h2>Catálogo pedagógico</h2><span class="quantidade">${esc(resumo)}</span></div>`+
+    (itens.length?`<div class="tabela-scroll"><table><thead><tr><th>Conteúdo</th><th>Série</th><th>Matéria</th><th>Bimestre</th><th>Capítulos</th><th>Status</th><th>Ação</th></tr></thead><tbody>${itens.map(c=>`<tr><td><strong>${esc(c.nome)}</strong></td><td>${esc(c.serie)}</td><td>${esc(c.materia)}</td><td>${c.bimestre?Number(c.bimestre)+'º':'—'}</td><td>${(c.capitulos||'').split(',').filter(Boolean).length}</td><td><span class="pill ${Number(c.ativo)?'verde':'cinza'}">${Number(c.ativo)?'Disponível':'Oculto'}</span></td><td><button class="link-btn" data-editar-conteudo="${Number(c.id_conteudo)}">Editar</button></td></tr>`).join('')}</tbody></table></div>`:vazio('Nenhum conteúdo organizado','Escolha um capítulo revisado abaixo e associe-o a uma série.'))+'</section>'+
+    `<section class="painel pendencias-conteudo"><div class="filtros"><div><h2>Capítulos para classificar</h2><p class="muted">Apenas livros ativos e capítulos revisados.</p></div><span class="quantidade">${pendentes.length}</span></div>`+
+    (pendentes.length?`<div class="tabela-scroll"><table><thead><tr><th>Capítulo do livro</th><th>Livro</th><th>Matéria</th><th>Ação</th></tr></thead><tbody>${pendentes.map(c=>`<tr><td><strong>${esc(c.titulo)}</strong></td><td>${esc(c.livro)}</td><td>${esc(c.materia)}</td><td><button class="link-btn" data-classificar="${Number(c.id_capitulo)}" ${seriesConteudo.length?'':'disabled'}>Classificar</button></td></tr>`).join('')}</tbody></table></div>`:vazio('Todos os capítulos revisados estão associados','Você pode editar nomes, ordem e bimestres no catálogo acima.'))+'</section>'+
+    (!seriesConteudo.length?'<p class="dica">Cadastre uma turma com série definida antes de organizar conteúdos.</p>':'');
+  if($('#novo-conteudo'))$('#novo-conteudo').onclick=()=>formConteudo();
+  document.querySelectorAll('[data-editar-conteudo]').forEach(b=>b.onclick=()=>formConteudo(itens.find(c=>String(c.id_conteudo)===b.dataset.editarConteudo)));
+  document.querySelectorAll('[data-classificar]').forEach(b=>b.onclick=()=>formConteudo(null,Number(b.dataset.classificar)));
+}
+
+function formConteudo(atual=null,capituloInicial=0){
+  const capitulo=catalogoCapitulos.find(c=>Number(c.id_capitulo)===capituloInicial);
+  const materiaInicial=atual?.materia||capitulo?.materia||'';
+  const vinculados=new Set((atual?.capitulos||'').split(',').filter(Boolean).map(Number));
+  if(capituloInicial)vinculados.add(capituloInicial);
+  const materias=[...new Set(catalogoCapitulos.map(c=>c.materia))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  abrirModal(atual?'Editar conteúdo':'Organizar conteúdo',
+    `<p class="dica">Escolha um nome claro para o aluno. Os capítulos selecionados serão usados como fonte para explicação e quiz.</p>`+
+    `<label>Nome pedagógico<input name="nome" value="${esc(atual?.nome)}" maxlength="180" required placeholder="Ex.: Função quadrática"></label>`+
+    `<div class="form-duas-colunas"><label>Série<select name="serie" required><option value="">Selecione a série</option>${seriesConteudo.map(s=>`<option value="${esc(s.serie)}" ${s.serie===atual?.serie?'selected':''}>${esc(s.serie)}</option>`).join('')}</select></label>`+
+    `<label>Matéria<select name="materia" id="materia-conteudo" required><option value="">Selecione a matéria</option>${materias.map(m=>`<option value="${esc(m)}" ${m===materiaInicial?'selected':''}>${esc(m)}</option>`).join('')}</select></label></div>`+
+    `<div class="form-duas-colunas"><label>Bimestre<select name="bimestre"><option value="">Sem bimestre definido</option>${[1,2,3,4].map(n=>`<option value="${n}" ${Number(atual?.bimestre)===n?'selected':''}>${n}º bimestre</option>`).join('')}</select></label>`+
+    `<label>Ordem de apresentação<input name="ordem" type="number" min="0" max="10000" value="${Number(atual?.ordem||0)}" required></label></div>`+
+    `<label>Capítulos revisados desta matéria<select name="capitulos" id="capitulos-conteudo" size="8" multiple required aria-describedby="ajuda-capitulos"></select><small id="ajuda-capitulos">Use Ctrl ou Shift para selecionar mais de um capítulo. Eles podem pertencer a livros diferentes da mesma matéria.</small></label>`+
+    `<label class="conteudo-ativo"><input type="checkbox" name="ativo" ${!atual||Number(atual.ativo)?'checked':''}> Disponível para os alunos</label>`,
+    async fd=>{
+      const capitulos=fd.getAll('capitulos').map(Number);
+      if(!capitulos.length)throw new Error('Selecione ao menos um capítulo revisado.');
+      await api('salvar_conteudo',{id:Number(atual?.id_conteudo||0),nome:fd.get('nome'),serie:fd.get('serie'),materia:fd.get('materia'),bimestre:fd.get('bimestre'),ordem:Number(fd.get('ordem')),ativo:fd.get('ativo')==='on',capitulos});
+      $('#modal').close();aviso('Conteúdo salvo. O app já pode mostrá-lo para a série selecionada.');carregar();
+    });
+  const materiasSelect=$('#materia-conteudo'),capitulosSelect=$('#capitulos-conteudo');
+  const atualizar=()=>{
+    const selecionados=new Set([...capitulosSelect.selectedOptions].map(o=>Number(o.value)));
+    capitulosSelect.innerHTML=catalogoCapitulos.filter(c=>c.materia===materiasSelect.value).map(c=>
+      `<option value="${Number(c.id_capitulo)}" ${(selecionados.has(Number(c.id_capitulo))||vinculados.has(Number(c.id_capitulo)))?'selected':''}>${esc(c.livro)} · ${esc(c.titulo)}</option>`).join('');
+  };
+  materiasSelect.onchange=()=>{vinculados.clear();capitulosSelect.replaceChildren();atualizar();};
+  atualizar();
+}
+
 api('sessao').then(entrar).catch(e=>{mostrarLogin();if(!/Entre para acessar|sessão expirou/.test(e.message))erro($('#erro-login'),e.message);});

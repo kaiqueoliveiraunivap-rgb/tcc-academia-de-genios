@@ -105,7 +105,8 @@ class CapitulosActivity : AppCompatActivity() {
     }
 
     private fun gerar(id: Int, titulo: String) {
-        preparacao.gerar(Sessao.token(this), id, titulo, intent.getIntExtra("ID_TURMA", Sessao.idTurma(this)))
+        preparacao.gerar(Sessao.token(this), id, titulo,
+            intent.getIntExtra("ID_TURMA", Sessao.idTurma(this)),intent.getIntExtra("ID_CONTEUDO",0))
     }
 
     private fun mostrarFalhaGeracao(id: Int, titulo: String, mensagem: String) {

@@ -7,6 +7,8 @@ $aluno=exigirUsuarioLogado($conn);
 if (normalizarPerfil($aluno['tipo_perfil'])!=='aluno') responderErro('Estudo exclusivo de alunos.',403);
 set_time_limit(210);
 $id = inteiroDoPost('id_capitulo');
+$idConteudo=inteiroDoPost('id_conteudo');
+if (isset($_POST['id_conteudo']) && !$idConteudo) responderErro('Conteúdo inválido.',422);
 $nivel = 'MEDIO';
 if (!$id) responderErro('Capítulo inválido.');
 $idTurma=turmaDoEstudo($conn,$aluno['id_usuario'],inteiroDoPost('id_turma'));
@@ -34,12 +36,37 @@ try {
     $stmt->bind_param('i',$id); $stmt->execute();
     $cap=$stmt->get_result()->fetch_assoc();
     if (!$cap) responderErro('Capítulo não disponível para estudo.',404);
+    if ($idConteudo) {
+        if (!$idTurma) responderErro('Informe sua turma para abrir este conteúdo.',422);
+        $s=$conn->prepare('SELECT 1 FROM conteudo_pedagogico cp
+            JOIN conteudo_capitulo cc ON cc.id_conteudo=cp.id_conteudo AND cc.id_capitulo=?
+            JOIN turma t ON t.serie=cp.serie AND t.id_turma=?
+            JOIN matricula m ON m.id_turma=t.id_turma AND m.id_aluno=?
+            WHERE cp.id_conteudo=? AND cp.materia=? AND cp.ativo=1 LIMIT 1');
+        $s->bind_param('iiiis',$id,$idTurma,$aluno['id_usuario'],$idConteudo,$cap['materia']);
+        $s->execute(); $permitido=$s->get_result()->num_rows===1; $s->close();
+        if (!$permitido) responderErro('Conteúdo indisponível para sua série.',403);
+    } elseif ($idTurma) {
+        $s=$conn->prepare('SELECT cp.id_conteudo FROM conteudo_pedagogico cp
+            JOIN conteudo_capitulo cc ON cc.id_conteudo=cp.id_conteudo
+            JOIN turma t ON t.serie=cp.serie AND t.id_turma=?
+            WHERE cc.id_capitulo=? AND cp.ativo=1 LIMIT 2');
+        $s->bind_param('ii',$idTurma,$id); $s->execute(); $itens=$s->get_result()->fetch_all(MYSQLI_ASSOC); $s->close();
+        if (count($itens)>1) responderErro('Selecione o conteúdo no aplicativo atualizado.',422);
+        if (count($itens)===1) $idConteudo=(int)$itens[0]['id_conteudo'];
+    }
+    if (!$idConteudo) {
+        $s=$conn->prepare('SELECT 1 FROM conteudo_capitulo cc JOIN conteudo_pedagogico cp ON cp.id_conteudo=cc.id_conteudo
+            WHERE cc.id_capitulo=? LIMIT 1');
+        $s->bind_param('i',$id); $s->execute(); $classificado=$s->get_result()->num_rows>0; $s->close();
+        if ($classificado) responderErro('Conteúdo indisponível para sua série.',403);
+    }
     $paginas=json_decode($cap['paginas_json'],true,512,JSON_THROW_ON_ERROR);
     // Nunca truncar o capítulo silenciosamente.
     if (!$paginas || strlen($cap['paginas_json'])>180000) responderErro('Capítulo sem texto ou muito extenso. Solicite a revisão/divisão do conteúdo.',422);
     $model=configuracao('GEMINI_MODEL');
     if (!$model || !preg_match('/^[a-zA-Z0-9.\-]+$/',$model)) responderErro('Configure GEMINI_MODEL no servidor.',503);
-    $orientacao=orientacaoDaTurma($conn,$idTurma,$cap['materia'],(int)$cap['id_livro']);
+    $orientacao=orientacaoDaTurma($conn,$idTurma,$cap['materia'],(int)$cap['id_livro'],$idConteudo);
     $idPrompt=$orientacao ? (int)$orientacao['id_prompt'] : null;
     // Nova explicação, edição do capítulo ou orientação exigem um novo estudo.
     // O resultado personalizado é compartilhado somente pela turma destinatária.

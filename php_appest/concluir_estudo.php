@@ -69,6 +69,11 @@ try {
         if (count($associacoes)>1) { $conn->rollback(); responderErro('Atualize o aplicativo para selecionar o conteúdo.',422); }
         if ($associacoes) $idConteudo=(int)$associacoes[0]['id_conteudo'];
     }
+    if (!$idConteudo) {
+        $s=$conn->prepare('SELECT 1 FROM conteudo_capitulo WHERE id_capitulo=? LIMIT 1');
+        $s->bind_param('i',$estudo['id_capitulo']); $s->execute(); $classificado=$s->get_result()->num_rows>0; $s->close();
+        if ($classificado) { $conn->rollback(); responderErro('Conteúdo indisponível para sua série.',403); }
+    }
     $questoes=json_decode($estudo['conteudo_json'],true,512,JSON_THROW_ON_ERROR)['questoes'];
     if (count($questoes)!==5) throw new RuntimeException('Quiz incompleto.');
     $acertos=0; $total=5;

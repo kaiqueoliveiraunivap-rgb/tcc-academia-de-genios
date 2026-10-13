@@ -38,6 +38,8 @@ if ($acao==='abrir') {
     $s->bind_param('iii',$aluno['id_usuario'],$idConteudo,$conteudo['id_capitulo']); $s->execute(); $s->close();
     $s=$conn->prepare('SELECT p.id_capitulo_atual FROM progresso_conteudo p
       JOIN conteudo_capitulo cc ON cc.id_conteudo=p.id_conteudo AND cc.id_capitulo=p.id_capitulo_atual
+      JOIN capitulo_livro c ON c.id_capitulo=cc.id_capitulo AND c.revisado=1
+      JOIN livro_didatico l ON l.id_livro=c.id_livro AND l.ativo=1
       WHERE p.id_aluno=? AND p.id_conteudo=?');
     $s->bind_param('ii',$aluno['id_usuario'],$idConteudo); $s->execute();
     $capituloAtual=$s->get_result()->fetch_assoc(); $s->close();

@@ -89,3 +89,9 @@ if (!$conn->query("SHOW COLUMNS FROM quiz_estudo LIKE 'id_conteudo'")->num_rows)
         ADD INDEX idx_quiz_conteudo_mes (id_aluno,id_turma,id_conteudo,criado_em),
         ADD CONSTRAINT fk_quiz_conteudo FOREIGN KEY (id_conteudo) REFERENCES conteudo_pedagogico(id_conteudo)');
 }
+
+if (!$conn->query("SHOW COLUMNS FROM prompt_professor LIKE 'id_conteudo'")->num_rows) {
+    $conn->query('ALTER TABLE prompt_professor ADD COLUMN id_conteudo INT NULL,
+        ADD INDEX idx_prompt_conteudo_ativo (id_turma,id_conteudo,usado),
+        ADD CONSTRAINT fk_prompt_conteudo FOREIGN KEY (id_conteudo) REFERENCES conteudo_pedagogico(id_conteudo)');
+}
