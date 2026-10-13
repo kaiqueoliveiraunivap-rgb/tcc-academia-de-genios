@@ -5,7 +5,20 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/BackGround"
-    android:padding="24dp">
+    android:paddingStart="24dp"
+    android:paddingTop="24dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="18dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="9dp"
+        android:text="ÁREA DO PROFESSOR"
+        android:textColor="@color/Destaque"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.13" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,9 +33,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Olá, Professor(a)"
-            android:textSize="22sp"
+            android:textSize="25sp"
             android:textStyle="bold"
-            android:textColor="@color/btnSelecionado" />
+            android:textColor="@color/TextoPrincipal" />
 
         <Button
             android:id="@+id/btnSairProfessor"
@@ -41,22 +54,33 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Escolha a turma para personalizar o estudo"
-        android:textSize="14sp"
-        android:textColor="@color/BordaButton"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="16dp" />
+        android:text="Escolha uma turma para orientar o estudo ou acompanhar resultados."
+        android:textSize="15sp"
+        android:textColor="@color/TextoSecundario"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="20dp" />
 
     <Button
         android:id="@+id/btnAbrirDashboard"
         android:layout_width="match_parent"
         android:layout_height="52dp"
-        android:text="📊 Desempenho das turmas"
+        android:text="Ver desempenho das turmas"
+        android:textAllCaps="false"
         android:textSize="15sp"
         android:textStyle="bold"
-        android:textColor="@color/TextoNoPrimario"
-        android:backgroundTint="@color/Destaque"
-        android:layout_marginBottom="20dp" />
+        android:textColor="@color/BackGround"
+        android:backgroundTint="@color/btnSelecionado"
+        android:layout_marginBottom="25dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:text="SUAS TURMAS"
+        android:textColor="@color/TextoSecundario"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.12" />
 
     <ProgressBar
         android:id="@+id/progressBarProfessor"

@@ -30,7 +30,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="O que vamos estudar?"
-                android:textSize="22sp"
+                android:textSize="27sp"
                 android:textStyle="bold"
                 android:textColor="@color/TextoPrincipal"
                 android:layout_marginTop="16dp"/>
@@ -38,8 +38,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Escolha a matéria que deseja estudar"
-                android:textSize="14sp"
+                android:text="Escolha uma matéria para explorar seus livros e capítulos."
+                android:textSize="15sp"
                 android:textColor="@color/TextoSecundario"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="24dp"/>
@@ -49,7 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="MATÉRIA"
-                android:textSize="14sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:textColor="@color/BordaButton"
                 android:letterSpacing="0.12"
@@ -81,7 +81,7 @@
                     android:id="@+id/tvCarregando"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="✨ Gerando questões com IA..."
+                    android:text="Preparando seu estudo…"
                     android:textSize="14sp"
                     android:textColor="@color/Destaque"
                     android:gravity="center"
