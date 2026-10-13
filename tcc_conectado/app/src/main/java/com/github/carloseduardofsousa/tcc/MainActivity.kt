@@ -1,7 +1,6 @@
 package com.github.carloseduardofsousa.tcc
 
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Build
 import android.text.Layout
@@ -167,7 +166,7 @@ class   MainActivity : AppCompatActivity() {
 
         alternativaSelecionadaId = -1
         aguardandoProxima        = false
-        btnConfirmar.text        = "CONFIRMAR"
+        btnConfirmar.text        = "Confirmar resposta"
         btnConfirmar.isEnabled   = false
         txtExplicacao.visibility = View.GONE
         findViewById<ScrollView>(R.id.scrollQuestao).post { findViewById<ScrollView>(R.id.scrollQuestao).scrollTo(0, 0) }
@@ -175,7 +174,7 @@ class   MainActivity : AppCompatActivity() {
         botoes.forEach {
             it.isEnabled        = true
             it.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btnOpcoes)
-            it.setTextColor(ContextCompat.getColor(this, R.color.BordaButton))
+            it.setTextColor(ContextCompat.getColor(this, R.color.TextoPrincipal))
         }
     }
 
@@ -189,10 +188,10 @@ class   MainActivity : AppCompatActivity() {
                 alternativaSelecionadaId = listaDePerguntas[indiceAtual].alternativas.getOrNull(idx)?.id ?: -1
                 botoes.forEach {
                     it.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btnOpcoes)
-                    it.setTextColor(ContextCompat.getColor(this, R.color.BordaButton))
+                    it.setTextColor(ContextCompat.getColor(this, R.color.TextoPrincipal))
                 }
                 botao.backgroundTintList = ContextCompat.getColorStateList(this, R.color.btnSelecionado)
-                botao.setTextColor(Color.WHITE)
+                botao.setTextColor(ContextCompat.getColor(this, R.color.BackGround))
                 btnConfirmar.isEnabled = true
             }
         }
@@ -216,7 +215,7 @@ class   MainActivity : AppCompatActivity() {
 
         botoes.getOrNull(idxCorreto)?.let {
             it.backgroundTintList = ContextCompat.getColorStateList(this, R.color.OptCerta)
-            it.setTextColor(Color.WHITE)
+            it.setTextColor(ContextCompat.getColor(this, R.color.BackGround))
         }
 
         if (altSelecionada.ehCorreta) {
@@ -225,7 +224,7 @@ class   MainActivity : AppCompatActivity() {
         } else {
             botoes.getOrNull(idxErrado)?.let {
                 it.backgroundTintList = ContextCompat.getColorStateList(this, R.color.OptErrada)
-                it.setTextColor(Color.WHITE)
+                it.setTextColor(ContextCompat.getColor(this, R.color.BackGround))
             }
             btnConfirmar.text = if (indiceAtual == listaDePerguntas.lastIndex) "ERROU! VER RESULTADO" else "ERROU! PRÓXIMA"
         }

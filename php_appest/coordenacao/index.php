@@ -10,7 +10,7 @@ header('Referrer-Policy: no-referrer');
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#242457"><title>Coordenação · Academia de Gênios</title>
-  <link rel="stylesheet" href="painel.css?v=2"><script src="painel.js?v=2" defer></script>
+  <link rel="stylesheet" href="painel.css?v=2"><link rel="stylesheet" href="painel-polimento.css?v=1"><script src="painel.js?v=2" defer></script>
 </head>
 <body>
 <div id="inicial" class="carregando" role="status">Abrindo a Academia de Gênios…</div>
