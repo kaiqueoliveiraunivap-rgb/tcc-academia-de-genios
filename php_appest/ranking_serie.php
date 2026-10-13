@@ -34,6 +34,11 @@ if ($perfil==='aluno') {
     $resultadoVinculo=$s->get_result(); $vinculado=$resultadoVinculo->num_rows===1;
     $resultadoVinculo->free(); $s->close();
     if (!$vinculado) responderErro('Série não vinculada ao aluno.',403);
+} else {
+    $s=$conn->prepare('SELECT 1 FROM turma WHERE id_professor=? AND serie=? LIMIT 1');
+    $s->bind_param('is',$usuario['id_usuario'],$serie); $s->execute();
+    $vinculado=$s->get_result()->num_rows===1; $s->close();
+    if (!$vinculado) responderErro('Série não vinculada ao professor.',403);
 }
 
 $s=$conn->prepare("SELECT u.id_usuario,u.nome,SUM(r.pontos) AS pontos

@@ -80,6 +80,9 @@ try {
     $prof=$pasta.'professor_pedagogico.php';
     [$codigo,$resumoProf]=chamar($prof,['token'=>$tokenProf,'acao'=>'resumo']);
     confirmar($codigo===200 && $resumoProf['turmas_total']===2 && $resumoProf['alunos_total']===2,'Resumo do professor incorreto.');
+    [$codigo]=chamar($pasta.'ranking_serie.php',['token'=>$tokenProf,'serie'=>'1º Ano',
+        'mes_referencia'=>date('Y-m')]);
+    confirmar($codigo===403,'Professor consultou ranking de série sem vínculo.');
     [$codigo,$catalogoProf]=chamar($prof,['token'=>$tokenProf,'acao'=>'conteudos','id_turma'=>$ids['turmaA']]);
     confirmar($codigo===200 && count($catalogoProf['conteudos'])===1,'Professor não recebeu conteúdos da turma.');
     [$codigo]=chamar($prof,['token'=>$tokenA,'acao'=>'conteudos','id_turma'=>$ids['turmaA']]);
