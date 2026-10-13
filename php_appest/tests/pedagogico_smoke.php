@@ -51,11 +51,12 @@ function confirmar(bool $ok,string $mensagem): void {
 try {
     $sufixo=bin2hex(random_bytes(5)); $senha=password_hash(bin2hex(random_bytes(16)),PASSWORD_DEFAULT);
     $ids['prof']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Professor Teste $sufixo","prof-$sufixo@example.invalid",$senha,'professor']);
+    $ids['profOutro']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Outro Professor $sufixo","prof-outro-$sufixo@example.invalid",$senha,'professor']);
     $ids['admin']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Secretaria Teste $sufixo","secretaria-$sufixo@example.invalid",$senha,'admin']);
     $ids['alunoA']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Aluno A $sufixo","aluno-a-$sufixo@example.invalid",$senha,'aluno']);
     $ids['alunoB']=gravar($conn,'INSERT INTO usuario(nome,email,senha,tipo_perfil) VALUES (?,?,?,?)',["Aluno B $sufixo","aluno-b-$sufixo@example.invalid",$senha,'aluno']);
     $ids['turmaA']=gravar($conn,'INSERT INTO turma(nome_turma,serie,ano_letivo,id_professor) VALUES (?,?,?,?)',["2º Ano A $sufixo",'2º Ano','2026',$ids['prof']]);
-    $ids['turmaB']=gravar($conn,'INSERT INTO turma(nome_turma,serie,ano_letivo,id_professor) VALUES (?,?,?,?)',["3º Ano A $sufixo",'3º Ano','2026',$ids['prof']]);
+    $ids['turmaB']=gravar($conn,'INSERT INTO turma(nome_turma,serie,ano_letivo,id_professor) VALUES (?,?,?,?)',["3º Ano A $sufixo",'3º Ano','2026',$ids['profOutro']]);
     gravar($conn,'INSERT INTO matricula(id_turma,id_aluno) VALUES (?,?)',[$ids['turmaA'],$ids['alunoA']]);
     gravar($conn,'INSERT INTO matricula(id_turma,id_aluno) VALUES (?,?)',[$ids['turmaB'],$ids['alunoB']]);
     $ids['livro']=gravar($conn,'INSERT INTO livro_didatico(titulo,materia,fonte_url,versao,ativo) VALUES (?,?,?,?,1)',["Livro teste $sufixo",'Matemática','https://example.invalid/livro.pdf',hash('sha256',$sufixo)]);
@@ -95,10 +96,12 @@ try {
 
     $prof=$pasta.'professor_pedagogico.php';
     [$codigo,$resumoProf]=chamar($prof,['token'=>$tokenProf,'acao'=>'resumo']);
-    confirmar($codigo===200 && $resumoProf['turmas_total']===2 && $resumoProf['alunos_total']===2,'Resumo do professor incorreto.');
-    [$codigo]=chamar($pasta.'ranking_serie.php',['token'=>$tokenProf,'serie'=>'1º Ano',
+    confirmar($codigo===200 && $resumoProf['turmas_total']===1 && $resumoProf['alunos_total']===1,'Resumo do professor incorreto.');
+    [$codigo]=chamar($pasta.'ranking_serie.php',['token'=>$tokenProf,'serie'=>'3º Ano',
         'mes_referencia'=>date('Y-m')]);
     confirmar($codigo===403,'Professor consultou ranking de série sem vínculo.');
+    [$codigo]=chamar($prof,['token'=>$tokenProf,'acao'=>'conteudos','id_turma'=>$ids['turmaB']]);
+    confirmar($codigo===403,'Professor acessou turma de outro professor.');
     [$codigo,$catalogoProf]=chamar($prof,['token'=>$tokenProf,'acao'=>'conteudos','id_turma'=>$ids['turmaA']]);
     confirmar($codigo===200 && count($catalogoProf['conteudos'])===1,'Professor não recebeu conteúdos da turma.');
     [$codigo]=chamar($prof,['token'=>$tokenA,'acao'=>'conteudos','id_turma'=>$ids['turmaA']]);
@@ -111,6 +114,15 @@ try {
     [$codigo,$publicacao]=chamar($prof,$escopo+['acao'=>'publicar_atividade','titulo'=>'Prática de funções']);
     confirmar($codigo===200 && $publicacao['id_atividade']>0,'Professor não publicou atividade.');
     $ids['atividade']=$publicacao['id_atividade'];
+    [$codigo]=chamar($prof,['token'=>$tokenProf,'acao'=>'publicar_atividade','id_turma'=>$ids['turmaB'],
+        'id_conteudo'=>$ids['conteudo'],'titulo'=>'Publicação indevida']);
+    confirmar($codigo===403,'Professor publicou atividade em turma sem autorização.');
+    [$codigo]=chamar($pasta.'inserir_usuario.php',['nome'=>'Conta indevida','email'=>'indevida-'.$sufixo.'@example.invalid',
+        'senha'=>'SenhaForte123!']);
+    confirmar($codigo===403,'Cadastro público de aluno foi aceito.');
+    [$codigo]=chamar($pasta.'cadastrar_professor.php',['nome'=>'Professor indevido',
+        'email'=>'prof-indevido-'.$sufixo.'@example.invalid','senha'=>'SenhaForte123!']);
+    confirmar($codigo===403,'Cadastro público de professor foi aceito.');
 
     [$codigo]=chamar($base,['token'=>'invalido']); confirmar($codigo===401,'Token inválido não foi recusado.');
     [$codigo]=chamar($pasta.'ler_capitulo.php',['token'=>$tokenB,'id_capitulo'=>$ids['capitulo']]);
@@ -258,5 +270,5 @@ try {
         gravar($conn,'DELETE FROM coordenacao_auditoria WHERE id_autor=?',[$ids['admin']]);
     }
     foreach (['turmaA','turmaB'] as $turma) if (isset($ids[$turma])) gravar($conn,'DELETE FROM turma WHERE id_turma=?',[$ids[$turma]]);
-    foreach (['prof','admin','alunoA','alunoB'] as $usuario) if (isset($ids[$usuario])) gravar($conn,'DELETE FROM usuario WHERE id_usuario=?',[$ids[$usuario]]);
+    foreach (['prof','profOutro','admin','alunoA','alunoB'] as $usuario) if (isset($ids[$usuario])) gravar($conn,'DELETE FROM usuario WHERE id_usuario=?',[$ids[$usuario]]);
 }
