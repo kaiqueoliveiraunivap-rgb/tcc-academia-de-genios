@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,7 +18,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 // ── Modelo ───────────────────────────────────────────────────
-data class MateriaItem(val nome: String, val emoji: String, val capitulos: Int)
+data class MateriaItem(val nome: String, val sigla: String, val capitulos: Int)
 
 // ── Adapter do grid de matérias ──────────────────────────────
 class MateriaAdapter(
@@ -31,28 +32,34 @@ class MateriaAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val ctx = parent.context
-        val emoji = TextView(ctx).apply {
-            textSize = 28f
+        val sigla = TextView(ctx).apply {
+            textSize = 15f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
+            setTextColor(ContextCompat.getColor(ctx, R.color.Destaque))
+            background = GradientDrawable().apply {
+                cornerRadius = EstudoUi.dp(ctx, 12).toFloat()
+                setColor(ContextCompat.getColor(ctx, R.color.DestaqueSuave))
+            }
         }
         val label = TextView(ctx).apply {
             textSize = 16f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(EstudoUi.dp(ctx, 14), 0, 0, 0)
         }
         val status = TextView(ctx).apply { textSize = 13f; gravity = Gravity.CENTER_VERTICAL }
         val card = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = EstudoUi.dp(ctx, 76)
+            minimumHeight = EstudoUi.dp(ctx, 82)
             isFocusable = true
             setPadding(EstudoUi.dp(ctx, 18), EstudoUi.dp(ctx, 12), EstudoUi.dp(ctx, 18), EstudoUi.dp(ctx, 12))
             layoutParams = ViewGroup.MarginLayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply { setMargins(0, EstudoUi.dp(ctx, 5), 0, EstudoUi.dp(ctx, 5)) }
-            addView(emoji)
-            addView(LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; addView(label); addView(status.apply { setPadding(EstudoUi.dp(ctx, 14), 0, 0, 0) }) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            addView(sigla, LinearLayout.LayoutParams(EstudoUi.dp(ctx, 48), EstudoUi.dp(ctx, 48)).apply { rightMargin = EstudoUi.dp(ctx, 14) })
+            addView(LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; addView(label); addView(status) }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         }
         return VH(card)
     }
@@ -61,7 +68,7 @@ class MateriaAdapter(
         val item = items[position]
         val isSelected = position == selectedPos
 
-        (h.card.getChildAt(0) as TextView).text = item.emoji
+        (h.card.getChildAt(0) as TextView).text = item.sigla
         val textos = h.card.getChildAt(1) as LinearLayout
         (textos.getChildAt(0) as TextView).apply {
             text = item.nome
@@ -73,6 +80,8 @@ class MateriaAdapter(
             setColor(if (isSelected) UiPaleta.hex("#5C6BC0") else UiPaleta.superficie())
             setStroke(EstudoUi.dp(h.card.context, 1), UiPaleta.hex("#E1E3EE"))
         }
+        h.card.isEnabled = item.capitulos > 0
+        h.card.alpha = if (item.capitulos > 0) 1f else .64f
         h.card.setOnClickListener {
             val pos = h.bindingAdapterPosition
             if (pos == RecyclerView.NO_POSITION || items[pos].capitulos == 0) return@setOnClickListener
@@ -146,7 +155,7 @@ class SelecionarMateriaActivity : AppCompatActivity() {
             val array = json.getJSONArray("materias")
             val materias = (0 until array.length()).map { i ->
                 val nome = array.getJSONObject(i).getString("nome")
-                MateriaItem(nome, emojiDaMateria(nome), array.getJSONObject(i).optInt("capitulos_disponiveis"))
+                MateriaItem(nome, MateriaVisual.sigla(nome), array.getJSONObject(i).optInt("capitulos_disponiveis"))
             }
             tvCarregando.text = if (materias.none { it.capitulos > 0 }) "Os livros estão sendo preparados. Volte em breve." else ""
             tvCarregando.visibility = if (materias.none { it.capitulos > 0 }) View.VISIBLE else View.GONE
@@ -166,14 +175,6 @@ class SelecionarMateriaActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState); outState.putString("materia", materiaSelecionada?.nome ?: materiaRestaurada)
-    }
-
-    private fun emojiDaMateria(nome: String): String = when (nome.lowercase()) {
-        "matemática", "matematica" -> "📐"; "história", "historia" -> "📜"
-        "geografia" -> "🌍"; "ciências", "ciencias" -> "🔬"; "português", "portugues" -> "📖"
-        "inglês", "ingles" -> "🇺🇸"; "física", "fisica" -> "⚛️"; "química", "quimica" -> "🧪"
-        "biologia" -> "🧬"; "filosofia" -> "🤔"; "sociologia" -> "👥"; "redação", "redacao" -> "✍️"
-        else -> "📘"
     }
 
     private fun abrirFrentes() {

@@ -18,18 +18,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Personalizar estudo da turma"
-            android:textSize="22sp"
+            android:textSize="26sp"
             android:textStyle="bold"
-            android:textColor="@color/btnSelecionado" />
+            android:textColor="@color/TextoPrincipal" />
 
         <TextView
             android:id="@+id/txtSubtituloPrompt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""
-            android:textSize="13sp"
-            android:textColor="@color/BordaButton"
-            android:layout_marginTop="2dp"
+            android:textSize="15sp"
+            android:textColor="@color/TextoSecundario"
+            android:layout_marginTop="8dp"
             android:layout_marginBottom="24dp" />
 
         <!-- Matéria -->
@@ -56,6 +56,11 @@
                 android:orientation="horizontal" />
 
         </HorizontalScrollView>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="LIVRO" android:textSize="11sp" android:textStyle="bold" android:textColor="@color/LabelSecao" android:letterSpacing="0.12" />
+        <Spinner android:id="@+id/spinnerLivroPrompt" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:layout_marginBottom="16dp" android:contentDescription="Livro da orientação" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="BIMESTRE" android:textSize="11sp" android:textStyle="bold" android:textColor="@color/LabelSecao" android:letterSpacing="0.12" />
+        <Spinner android:id="@+id/spinnerBimestrePrompt" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:layout_marginBottom="20dp" android:contentDescription="Bimestre da orientação" />
 
         <!-- Instrução do professor -->
         <TextView
@@ -92,8 +97,8 @@
             android:text="Pré-visualizar orientação"
             android:textSize="15sp"
             android:textStyle="bold"
-            android:textColor="@color/TextoNoPrimario"
-            android:backgroundTint="@color/Destaque"
+            android:textColor="@color/BackGround"
+            android:backgroundTint="@color/btnSelecionado"
             android:layout_marginBottom="16dp" />
 
         <!-- Preview -->
@@ -150,7 +155,7 @@
             android:text="Aplicar à turma"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="@color/TextoNoPrimario"
+            android:textColor="@color/BackGround"
             android:backgroundTint="@color/btnSelecionado"
             android:enabled="false"
             android:alpha="0.5"

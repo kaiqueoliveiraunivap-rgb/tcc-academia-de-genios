@@ -7,8 +7,11 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.Spinner
+import android.widget.AdapterView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -23,7 +26,7 @@ import org.json.JSONObject
 
 class EnviarPromptActivity : AppCompatActivity() {
 
-    private data class MateriaChip(val nome: String, val emoji: String)
+    private data class MateriaChip(val nome: String, val sigla: String)
 
     private lateinit var containerMaterias: LinearLayout
     private lateinit var etInstrucao: TextInputEditText
@@ -32,6 +35,9 @@ class EnviarPromptActivity : AppCompatActivity() {
     private lateinit var txtPreviewPrompt: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var btnEnviar: Button
+    private lateinit var spinnerLivro: Spinner
+    private lateinit var spinnerBimestre: Spinner
+    private var livros = listOf(0 to "Todos os livros da matéria")
 
     private var nomeProfessor = ""
     private var idTurma = 0
@@ -63,6 +69,17 @@ class EnviarPromptActivity : AppCompatActivity() {
         txtPreviewPrompt  = findViewById(R.id.txtPreviewPrompt)
         progressBar       = findViewById(R.id.progressBarEnviarPrompt)
         btnEnviar         = findViewById(R.id.btnEnviarPrompt)
+        spinnerLivro      = findViewById(R.id.spinnerLivroPrompt)
+        spinnerBimestre   = findViewById(R.id.spinnerBimestrePrompt)
+        spinnerBimestre.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item,
+            listOf("Sem bimestre", "1º bimestre", "2º bimestre", "3º bimestre", "4º bimestre"))
+        spinnerLivro.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, livros.map { it.second })
+        val aoSelecionar = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) = invalidarPreview()
+        }
+        spinnerLivro.onItemSelectedListener = aoSelecionar
+        spinnerBimestre.onItemSelectedListener = aoSelecionar
 
         montarChipsMaterias()
 
@@ -96,7 +113,7 @@ class EnviarPromptActivity : AppCompatActivity() {
                 val materia = array.getJSONObject(i)
                 if (materia.optInt("capitulos_disponiveis") <= 0) null else {
                     val nome = materia.getString("nome")
-                    MateriaChip(nome, emojiDaMateria(nome))
+                    MateriaChip(nome, MateriaVisual.sigla(nome))
                 }
             }
             if (materias.isEmpty()) {
@@ -107,35 +124,21 @@ class EnviarPromptActivity : AppCompatActivity() {
         }
     }
 
-    private fun emojiDaMateria(nome: String): String = when (nome.lowercase()) {
-        "matemática", "matematica" -> "📐"
-        "história", "historia" -> "📜"
-        "geografia" -> "🌍"
-        "português", "portugues" -> "📖"
-        "física", "fisica" -> "⚛️"
-        "química", "quimica" -> "🧪"
-        "biologia" -> "🧬"
-        "filosofia" -> "🤔"
-        "sociologia" -> "👥"
-        "redação", "redacao" -> "✍️"
-        else -> "📘"
-    }
-
     private fun mostrarChipsMaterias(materias: List<MateriaChip>) {
         val chips = materias.map { materia ->
             TextView(this).apply {
-                text = "${materia.emoji}  ${materia.nome}"
-                textSize = 13f
-                setPadding(28, 18, 28, 18)
+                text = "${materia.sigla}  ${materia.nome}"
+                textSize = 14f
+                setPadding(EstudoUi.dp(this@EnviarPromptActivity, 15), EstudoUi.dp(this@EnviarPromptActivity, 11), EstudoUi.dp(this@EnviarPromptActivity, 15), EstudoUi.dp(this@EnviarPromptActivity, 11))
                 setTextColor(UiPaleta.hex("#333333"))
                 background = GradientDrawable().apply {
-                    cornerRadius = 40f
+                    cornerRadius = EstudoUi.dp(this@EnviarPromptActivity, 12).toFloat()
                     setColor(UiPaleta.hex("#F0F0F5"))
                 }
                 layoutParams = ViewGroup.MarginLayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-                ).apply { setMargins(0, 0, 12, 0) }
+                ).apply { setMargins(0, 0, EstudoUi.dp(this@EnviarPromptActivity, 8), 0) }
                 gravity = Gravity.CENTER
             }
         }
@@ -144,6 +147,7 @@ class EnviarPromptActivity : AppCompatActivity() {
             chip.setOnClickListener {
                 if (enviando) return@setOnClickListener
                 materiaSelecionada = materias[i].nome
+                carregarLivros(materias[i].nome)
                 chips.forEach {
                     it.setTextColor(UiPaleta.hex("#333333"))
                     (it.background as GradientDrawable).setColor(UiPaleta.hex("#F0F0F5"))
@@ -153,6 +157,29 @@ class EnviarPromptActivity : AppCompatActivity() {
                 invalidarPreview()
             }
             containerMaterias.addView(chip)
+        }
+    }
+
+    private fun carregarLivros(materia: String) {
+        spinnerLivro.isEnabled = false
+        lifecycleScope.launch {
+            val resposta = withContext(Dispatchers.IO) {
+                ApiClient.postComStatus("listar_livros_professor.php", mapOf("token" to Sessao.token(this@EnviarPromptActivity), "materia" to materia))
+            }
+            if (materiaSelecionada != materia) return@launch
+            val json = runCatching { JSONObject(resposta.corpo.orEmpty()) }.getOrNull()
+            if (!resposta.sucesso || json?.optString("status") != "sucesso") {
+                Toast.makeText(this@EnviarPromptActivity, "Não foi possível carregar os livros.", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val itens = json.getJSONArray("livros")
+            livros = listOf(0 to "Todos os livros da matéria") + (0 until itens.length()).map { i ->
+                val item = itens.getJSONObject(i)
+                item.getInt("id_livro") to item.getString("titulo")
+            }
+            spinnerLivro.adapter = ArrayAdapter(this@EnviarPromptActivity, android.R.layout.simple_spinner_dropdown_item, livros.map { it.second })
+            spinnerLivro.isEnabled = true
+            invalidarPreview()
         }
     }
 
@@ -177,12 +204,20 @@ class EnviarPromptActivity : AppCompatActivity() {
             Toast.makeText(this, "Escreva o que a turma precisa reforçar.", Toast.LENGTH_SHORT).show()
             return
         }
+        val livro = livros.getOrNull(spinnerLivro.selectedItemPosition)?.takeIf { it.first > 0 }
+        val bimestre = spinnerBimestre.selectedItemPosition.takeIf { it > 0 }
+        if (bimestre != null && livro == null) {
+            Toast.makeText(this, "Escolha o livro deste bimestre.", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val prompt = PromptProfessorBuilder.montar(
             nomeTurma       = nomeTurma,
             nomeProfessor   = nomeProfessor,
             materia         = materia,
-            instrucaoBruta  = instrucao
+            instrucaoBruta  = instrucao,
+            livro = livro?.second,
+            bimestre = bimestre
         )
 
         promptFinalAtual = prompt
@@ -201,10 +236,12 @@ class EnviarPromptActivity : AppCompatActivity() {
         btnEnviar.isEnabled = false
         btnGerarPreview.isEnabled = false
         etInstrucao.isEnabled = false
-        val parametros = mapOf(
+        val parametros = mutableMapOf(
             "token" to Sessao.token(this), "id_turma" to idTurma.toString(),
             "materia" to materia, "instrucao" to instrucao
         )
+        livros.getOrNull(spinnerLivro.selectedItemPosition)?.first?.takeIf { it > 0 }?.let { parametros["id_livro"] = it.toString() }
+        spinnerBimestre.selectedItemPosition.takeIf { it > 0 }?.let { parametros["bimestre"] = it.toString() }
         lifecycleScope.launch {
             val resposta = withContext(Dispatchers.IO) {
                 ApiClient.postComStatus("enviar_prompt_professor.php", parametros)
