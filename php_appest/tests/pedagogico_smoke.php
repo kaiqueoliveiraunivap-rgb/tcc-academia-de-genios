@@ -180,6 +180,15 @@ try {
     $ids['capitulo2']=gravar($conn,'INSERT INTO capitulo_livro(id_livro,ordem,titulo,paginas_json,revisado) VALUES (?,?,?,?,1)',
         [$ids['livro'],2,'Gráficos da função',json_encode([['pagina'=>2,'texto'=>'Exemplo de gráfico.']])]);
     gravar($conn,'INSERT INTO conteudo_capitulo(id_conteudo,id_capitulo,ordem) VALUES (?,?,1)',[$ids['conteudo'],$ids['capitulo2']]);
+    [$codigo,$atv]=chamar($pasta.'atividades_aluno.php',['token'=>$tokenA]);
+    confirmar($codigo===200 && $atv['atividades'][0]['estado']==='em_andamento',
+        'Atividade de duas unidades foi concluída após só um quiz.');
+    [$codigo,$painel]=chamar($pasta.'painel_aluno.php',['token'=>$tokenA]);
+    confirmar($codigo===200 && $painel['atividades_pendentes']===1,
+        'Painel não sinalizou a unidade pendente da atividade.');
+    [$codigo,$detalhe]=chamar($prof,$escopo+['acao'=>'detalhe']);
+    confirmar($codigo===200 && $detalhe['atividades'][0]['concluintes']===0,
+        'Professor contou como concluída uma atividade parcial.');
     [$codigo,$aberto]=chamar($base,['token'=>$tokenA,'acao'=>'abrir','id_conteudo'=>$ids['conteudo']]);
     confirmar($codigo===200 && count($aberto['conteudo']['unidades'])===2,'Conteúdo com duas unidades não foi listado.');
     [$codigo,$avancou]=chamar($base,['token'=>$tokenA,'acao'=>'avancar','id_conteudo'=>$ids['conteudo'],
@@ -191,6 +200,18 @@ try {
     [$codigo]=chamar($base,['token'=>$tokenB,'acao'=>'avancar','id_conteudo'=>$ids['conteudo'],
         'id_capitulo'=>$ids['capitulo2']]);
     confirmar($codigo===403,'Aluno de outra série avançou a unidade.');
+    $ids['estudo2']=gravar($conn,'INSERT INTO estudo_gerado(id_capitulo,dificuldade,versao_gerador,conteudo_json) VALUES (?,?,?,?)',
+        [$ids['capitulo2'],'MEDIO','teste2-'.$sufixo,json_encode(['questoes'=>$questoes])]);
+    $dados['id_estudo']=$ids['estudo2'];
+    $dados['tentativa']='44444444-4444-4444-8444-'.substr(hash('sha256',$sufixo),0,12);
+    [$codigo,$parte2]=chamar($quiz,$dados);
+    confirmar($codigo===200 && $parte2['acertos']===5,'Quiz da segunda unidade falhou.');
+    [$codigo,$atv]=chamar($pasta.'atividades_aluno.php',['token'=>$tokenA]);
+    confirmar($codigo===200 && $atv['atividades'][0]['estado']==='concluida',
+        'Atividade não concluiu após os quizzes das duas unidades.');
+    [$codigo,$detalhe]=chamar($prof,$escopo+['acao'=>'detalhe']);
+    confirmar($codigo===200 && $detalhe['atividades'][0]['concluintes']===1,
+        'Professor não contabilizou a conclusão das duas unidades.');
     echo "OK: aluno, professor, orientação, atividade, quiz idempotente, relatório e ranking.\n";
 } finally {
     if (isset($ids['alunoA'])) {
@@ -205,6 +226,7 @@ try {
     if (isset($ids['atividade'])) gravar($conn,'DELETE FROM atividade_publicada WHERE id_atividade=?',[$ids['atividade']]);
     if (isset($ids['conteudo'])) gravar($conn,'DELETE FROM prompt_professor WHERE id_conteudo=?',[$ids['conteudo']]);
     if (isset($ids['estudo'])) gravar($conn,'DELETE FROM estudo_gerado WHERE id_estudo=?',[$ids['estudo']]);
+    if (isset($ids['estudo2'])) gravar($conn,'DELETE FROM estudo_gerado WHERE id_estudo=?',[$ids['estudo2']]);
     if (isset($ids['alunoA'],$ids['conteudo'])) gravar($conn,'DELETE FROM progresso_conteudo WHERE id_aluno=? AND id_conteudo=?',[$ids['alunoA'],$ids['conteudo']]);
     if (isset($ids['conteudo'])) { gravar($conn,'DELETE FROM conteudo_capitulo WHERE id_conteudo=?',[$ids['conteudo']]); gravar($conn,'DELETE FROM conteudo_pedagogico WHERE id_conteudo=?',[$ids['conteudo']]); }
     if (isset($ids['capitulo'])) gravar($conn,'DELETE FROM capitulo_livro WHERE id_capitulo=?',[$ids['capitulo']]);

@@ -40,9 +40,15 @@ $s->bind_param('is',$aluno['id_usuario'],$serie); $s->execute(); $continuar=$s->
 
 $s=$conn->prepare('SELECT COUNT(*) AS total FROM atividade_publicada a
     JOIN conteudo_pedagogico cp ON cp.id_conteudo=a.id_conteudo AND cp.serie=? AND cp.ativo=1
-    WHERE a.id_turma=? AND a.ativa=1 AND NOT EXISTS (
-        SELECT 1 FROM atividade_quiz aq JOIN quiz_estudo q ON q.id_quiz=aq.id_quiz
-        WHERE aq.id_atividade=a.id_atividade AND q.id_aluno=?)');
+    WHERE a.id_turma=? AND a.ativa=1 AND
+      (SELECT COUNT(DISTINCT e.id_capitulo) FROM atividade_quiz aq
+        JOIN quiz_estudo q ON q.id_quiz=aq.id_quiz AND q.id_aluno=?
+        JOIN estudo_gerado e ON e.id_estudo=q.id_estudo
+        WHERE aq.id_atividade=a.id_atividade) <
+      (SELECT COUNT(*) FROM conteudo_capitulo cc
+        JOIN capitulo_livro c ON c.id_capitulo=cc.id_capitulo AND c.revisado=1
+        JOIN livro_didatico l ON l.id_livro=c.id_livro AND l.ativo=1 AND l.materia=cp.materia
+        WHERE cc.id_conteudo=cp.id_conteudo)');
 $s->bind_param('sii',$serie,$turma['id_turma'],$aluno['id_usuario']); $s->execute();
 $atividades=(int)$s->get_result()->fetch_assoc()['total']; $s->close();
 

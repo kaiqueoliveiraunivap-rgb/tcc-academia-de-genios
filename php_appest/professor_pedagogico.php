@@ -29,11 +29,24 @@ if ($acao==='resumo') {
     $s=$conn->prepare('SELECT COUNT(DISTINCT t.id_turma) AS turmas,COUNT(DISTINCT m.id_aluno) AS alunos
         FROM turma t LEFT JOIN matricula m ON m.id_turma=t.id_turma WHERE t.id_professor=?');
     $s->bind_param('i',$idProfessor); $s->execute(); $contagem=$s->get_result()->fetch_assoc(); $s->close();
-    $s=$conn->prepare('SELECT COUNT(DISTINCT a.id_atividade) AS publicadas,
-        COUNT(DISTINCT aq.id_atividade,q.id_aluno) AS conclusoes
-        FROM atividade_publicada a LEFT JOIN atividade_quiz aq ON aq.id_atividade=a.id_atividade
-        LEFT JOIN quiz_estudo q ON q.id_quiz=aq.id_quiz WHERE a.id_professor=?');
+    $s=$conn->prepare('SELECT COUNT(*) AS publicadas FROM atividade_publicada WHERE id_professor=?');
     $s->bind_param('i',$idProfessor); $s->execute(); $atividades=$s->get_result()->fetch_assoc(); $s->close();
+    $s=$conn->prepare('SELECT COUNT(*) AS conclusoes FROM (
+        SELECT a.id_atividade,q.id_aluno,COUNT(DISTINCT e.id_capitulo) AS partes,
+            (SELECT COUNT(*) FROM conteudo_capitulo cc
+                JOIN capitulo_livro c ON c.id_capitulo=cc.id_capitulo AND c.revisado=1
+                JOIN livro_didatico l ON l.id_livro=c.id_livro AND l.ativo=1 AND l.materia=cp.materia
+                WHERE cc.id_conteudo=a.id_conteudo) AS total
+        FROM atividade_publicada a
+        JOIN atividade_quiz aq ON aq.id_atividade=a.id_atividade
+        JOIN quiz_estudo q ON q.id_quiz=aq.id_quiz
+        JOIN estudo_gerado e ON e.id_estudo=q.id_estudo
+        JOIN conteudo_pedagogico cp ON cp.id_conteudo=a.id_conteudo
+        WHERE a.id_professor=?
+        GROUP BY a.id_atividade,q.id_aluno
+    ) concluidas WHERE partes>=total AND total>0');
+    $s->bind_param('i',$idProfessor); $s->execute();
+    $atividades['conclusoes']=$s->get_result()->fetch_assoc()['conclusoes']; $s->close();
     $s=$conn->prepare('SELECT COUNT(*) AS quizzes,ROUND(AVG(100.0*q.acertos/NULLIF(q.total,0)),1) AS media
         FROM quiz_estudo q JOIN turma t ON t.id_turma=q.id_turma WHERE t.id_professor=?');
     $s->bind_param('i',$idProfessor); $s->execute(); $quizzes=$s->get_result()->fetch_assoc(); $s->close();
@@ -121,13 +134,33 @@ $s=$conn->prepare('SELECT p.id_prompt,p.instrucao,p.data_criacao
     ORDER BY p.id_prompt DESC LIMIT 1');
 $s->bind_param('ii',$idTurma,$idConteudo); $s->execute(); $orientacao=$s->get_result()->fetch_assoc(); $s->close();
 $s=$conn->prepare('SELECT a.id_atividade,a.titulo,a.publicada_em,
-    COUNT(DISTINCT aq.id_quiz) AS tentativas,COUNT(DISTINCT q.id_aluno) AS concluintes
+    COUNT(DISTINCT aq.id_quiz) AS tentativas
     FROM atividade_publicada a LEFT JOIN atividade_quiz aq ON aq.id_atividade=a.id_atividade
     LEFT JOIN quiz_estudo q ON q.id_quiz=aq.id_quiz
     WHERE a.id_turma=? AND a.id_conteudo=? AND a.ativa=1
     GROUP BY a.id_atividade,a.titulo,a.publicada_em ORDER BY a.publicada_em DESC');
 $s->bind_param('ii',$idTurma,$idConteudo); $s->execute(); $atividades=$s->get_result()->fetch_all(MYSQLI_ASSOC); $s->close();
-foreach ($atividades as &$a) foreach (['id_atividade','tentativas','concluintes'] as $campo) $a[$campo]=(int)$a[$campo]; unset($a);
+$s=$conn->prepare('SELECT COUNT(*) AS total FROM conteudo_capitulo cc
+    JOIN capitulo_livro c ON c.id_capitulo=cc.id_capitulo AND c.revisado=1
+    JOIN livro_didatico l ON l.id_livro=c.id_livro AND l.ativo=1 AND l.materia=?
+    WHERE cc.id_conteudo=?');
+$s->bind_param('si',$conteudo['materia'],$idConteudo); $s->execute();
+$totalUnidades=(int)$s->get_result()->fetch_assoc()['total']; $s->close();
+$s=$conn->prepare('SELECT aq.id_atividade,q.id_aluno,COUNT(DISTINCT e.id_capitulo) AS partes
+    FROM atividade_publicada a JOIN atividade_quiz aq ON aq.id_atividade=a.id_atividade
+    JOIN quiz_estudo q ON q.id_quiz=aq.id_quiz JOIN estudo_gerado e ON e.id_estudo=q.id_estudo
+    WHERE a.id_turma=? AND a.id_conteudo=? AND a.ativa=1
+    GROUP BY aq.id_atividade,q.id_aluno');
+$s->bind_param('ii',$idTurma,$idConteudo); $s->execute();
+$concluintes=[];
+foreach ($s->get_result() as $linha) if ($totalUnidades>0 && (int)$linha['partes']>=$totalUnidades) {
+    $id=(int)$linha['id_atividade']; $concluintes[$id]=($concluintes[$id] ?? 0)+1;
+}
+$s->close();
+foreach ($atividades as &$a) {
+    $a['id_atividade']=(int)$a['id_atividade']; $a['tentativas']=(int)$a['tentativas'];
+    $a['concluintes']=$concluintes[$a['id_atividade']] ?? 0;
+} unset($a);
 $s=$conn->prepare('SELECT COUNT(DISTINCT q.id_aluno) AS alunos,COUNT(r.id_resposta) AS respostas,
     SUM(r.acertou) AS acertos FROM quiz_estudo q JOIN resposta_estudo r ON r.id_quiz=q.id_quiz
     WHERE q.id_turma=? AND q.id_conteudo=?');

@@ -33,13 +33,18 @@ if ($acao==='abrir') {
 
 $s=$conn->prepare('SELECT a.id_atividade,a.id_conteudo,a.id_turma,a.titulo,a.publicada_em,a.prazo_em,
     cp.nome AS conteudo,cp.materia,cp.bimestre,t.nome_turma,
-    COUNT(DISTINCT q.id_quiz) AS tentativas,MAX(100.0*q.acertos/NULLIF(q.total,0)) AS melhor_percentual,
+    COUNT(DISTINCT q.id_quiz) AS tentativas,COUNT(DISTINCT e.id_capitulo) AS unidades_realizadas,
+    (SELECT COUNT(*) FROM conteudo_capitulo cc JOIN capitulo_livro c ON c.id_capitulo=cc.id_capitulo AND c.revisado=1
+        JOIN livro_didatico l ON l.id_livro=c.id_livro AND l.ativo=1 AND l.materia=cp.materia
+        WHERE cc.id_conteudo=cp.id_conteudo) AS total_unidades,
+    MAX(100.0*q.acertos/NULLIF(q.total,0)) AS melhor_percentual,
     MAX(p.ultimo_acesso) AS ultimo_acesso
     FROM atividade_publicada a JOIN turma t ON t.id_turma=a.id_turma
     JOIN matricula m ON m.id_turma=t.id_turma AND m.id_aluno=?
     JOIN conteudo_pedagogico cp ON cp.id_conteudo=a.id_conteudo AND cp.serie=t.serie AND cp.ativo=1
     LEFT JOIN atividade_quiz aq ON aq.id_atividade=a.id_atividade
     LEFT JOIN quiz_estudo q ON q.id_quiz=aq.id_quiz AND q.id_aluno=?
+    LEFT JOIN estudo_gerado e ON e.id_estudo=q.id_estudo
     LEFT JOIN progresso_conteudo p ON p.id_conteudo=cp.id_conteudo AND p.id_aluno=? AND p.ultimo_acesso>=a.publicada_em
     WHERE a.ativa=1 AND EXISTS (SELECT 1 FROM conteudo_capitulo cc
         JOIN capitulo_livro c ON c.id_capitulo=cc.id_capitulo AND c.revisado=1
@@ -51,10 +56,11 @@ $s=$conn->prepare('SELECT a.id_atividade,a.id_conteudo,a.id_turma,a.titulo,a.pub
 $s->bind_param('iii',$aluno['id_usuario'],$aluno['id_usuario'],$aluno['id_usuario']);
 $s->execute(); $itens=$s->get_result()->fetch_all(MYSQLI_ASSOC); $s->close();
 foreach ($itens as &$item) {
-    foreach (['id_atividade','id_conteudo','id_turma','tentativas'] as $chave) $item[$chave]=(int)$item[$chave];
+    foreach (['id_atividade','id_conteudo','id_turma','tentativas','unidades_realizadas','total_unidades'] as $chave) $item[$chave]=(int)$item[$chave];
     $item['bimestre']=$item['bimestre']===null ? null : (int)$item['bimestre'];
     $item['melhor_percentual']=$item['melhor_percentual']===null ? null : round((float)$item['melhor_percentual'],1);
-    $item['estado']=$item['tentativas']>0 ? 'concluida' : ($item['ultimo_acesso']!==null ? 'em_andamento' : 'disponivel');
+    $item['estado']=$item['total_unidades']>0 && $item['unidades_realizadas']===$item['total_unidades']
+        ? 'concluida' : ($item['tentativas']>0 || $item['ultimo_acesso']!==null ? 'em_andamento' : 'disponivel');
     unset($item['ultimo_acesso']);
 } unset($item);
 responderJson(['status'=>'sucesso','atividades'=>$itens]);
