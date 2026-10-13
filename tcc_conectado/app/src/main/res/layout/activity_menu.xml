@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/BackGround"
     android:paddingStart="20dp"
-    android:paddingTop="28dp"
+    android:paddingTop="24dp"
     android:paddingEnd="20dp"
     android:paddingBottom="18dp">
 
@@ -15,20 +15,33 @@
         android:layout_height="wrap_content"
         android:text="Academia de Gênios"
         android:textColor="@color/btnSelecionado"
-        android:textSize="28sp"
+        android:textSize="26sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnMinhaContaMenu"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btnMinhaContaMenu"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/minha_conta"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_menu_account"
+        android:tint="@color/Destaque"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvSaudacaoMenu"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:lineSpacingExtra="3dp"
         android:textColor="@color/TextoSecundario"
-        android:textSize="16sp"
+        android:textSize="17sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvTituloMenu" />
@@ -53,7 +66,7 @@
         android:id="@+id/scrollOpcoesMenu"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="22dp"
+        android:layout_marginTop="26dp"
         android:layout_marginBottom="14dp"
         android:clipToPadding="false"
         android:fillViewport="true"

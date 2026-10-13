@@ -1,7 +1,7 @@
 <?php
 // O servidor local serve SOMENTE endpoints PHP da raiz da API.
 $path=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);
-if (preg_match('~^/php_appest/coordenacao/(index\.php|api\.php|painel\.css|painel\.js)?$~D',$path,$rota)) {
+if (preg_match('~^/php_appest/coordenacao/(index\.php|api\.php|painel\.css|painel-polimento\.css|painel\.js)?$~D',$path,$rota)) {
     $arquivo=$rota[1] ?? 'index.php';
     $alvo=dirname(__DIR__).'/coordenacao/'.$arquivo;
     if (str_ends_with($arquivo,'.php')) { require $alvo; }
