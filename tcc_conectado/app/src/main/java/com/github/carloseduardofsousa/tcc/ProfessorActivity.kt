@@ -15,6 +15,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -140,35 +144,41 @@ class ProfessorActivity : AppCompatActivity() {
             finish()
         }
 
-        carregarTurmas()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::rvTurmas.isInitialized) carregarTurmas()
     }
 
     private fun carregarTurmas() {
         progressBar.visibility = View.VISIBLE
         txtVazio.visibility = View.GONE
 
-        Thread {
+        lifecycleScope.launch {
             // Quem é o professor é resolvido pelo servidor a partir do token;
             // o id não é mais enviado porque o backend o ignoraria de qualquer forma.
-            val resposta = ApiClient.postComStatus(
-                "professor_pedagogico.php",
-                mapOf("token" to Sessao.token(this),"acao" to "resumo")
-            )
-
-            runOnUiThread {
+            val resposta = withContext(Dispatchers.IO) {
+                ApiClient.postComStatus("professor_pedagogico.php",
+                    mapOf("token" to Sessao.token(this@ProfessorActivity),"acao" to "resumo"))
+            }
                 progressBar.visibility = View.GONE
 
                 if (resposta.sessaoExpirada) {
-                    Toast.makeText(this, "Sessão expirada. Faça login novamente.", Toast.LENGTH_LONG).show()
-                    Sessao.encerrar(this)
+                    Toast.makeText(this@ProfessorActivity, "Sessão expirada. Faça login novamente.", Toast.LENGTH_LONG).show()
+                    Sessao.encerrar(this@ProfessorActivity)
                     finish()
-                    return@runOnUiThread
+                    return@launch
                 }
 
                 if (!resposta.sucesso) {
-                    Toast.makeText(this, "Erro ao carregar suas turmas.", Toast.LENGTH_LONG).show()
-                    return@runOnUiThread
+                    txtVazio.text = resposta.mensagemErro("Não foi possível carregar as turmas. Toque para tentar novamente.")
+                    txtVazio.visibility = View.VISIBLE
+                    txtVazio.setOnClickListener { carregarTurmas() }
+                    return@launch
                 }
+
+                txtVazio.setOnClickListener(null)
 
                 val dados = try { JSONObject(resposta.corpo.orEmpty()) } catch (e: Exception) { JSONObject() }
                 val json = dados.optJSONArray("turmas") ?: JSONArray()
@@ -179,8 +189,9 @@ class ProfessorActivity : AppCompatActivity() {
                     "${dados.optInt("atividades_publicadas")} atividades publicadas · ${dados.optInt("atividades_concluidas")} conclusões\n$media"
 
                 if (json.length() == 0) {
+                    txtVazio.text = "Você ainda não tem turmas vinculadas. Procure a secretaria."
                     txtVazio.visibility = View.VISIBLE
-                    return@runOnUiThread
+                    return@launch
                 }
 
                 val turmas = (0 until json.length()).map { i ->
@@ -196,14 +207,13 @@ class ProfessorActivity : AppCompatActivity() {
                 }
 
                 rvTurmas.adapter = TurmaAdapter(turmas) { turma ->
-                    val intent = Intent(this, ProfessorConteudosActivity::class.java)
+                    val intent = Intent(this@ProfessorActivity, ProfessorConteudosActivity::class.java)
                     intent.putExtra("ID_TURMA", turma.idTurma)
                     intent.putExtra("NOME_TURMA", turma.nomeTurma)
                     intent.putExtra("TOTAL_ALUNOS", turma.totalAlunos)
                     intent.putExtra("NOME_PROFESSOR", nomeProfessor)
                     startActivity(intent)
                 }
-            }
-        }.start()
+        }
     }
 }

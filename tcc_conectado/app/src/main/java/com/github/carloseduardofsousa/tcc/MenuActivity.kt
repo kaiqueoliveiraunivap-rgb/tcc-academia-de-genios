@@ -53,9 +53,9 @@ class MenuActivity : AppCompatActivity() {
                 carregarPainelAluno()
             }
             "professor"->{
-                opcao(R.drawable.ic_menu_chart,"Gráficos das turmas","Analise dificuldades por matéria e capítulo") { abrirSelecao("GRAFICOS_TURMA") }
-                opcao(R.drawable.ic_menu_trophy,"Ranking da escola","Selecione uma série e veja a classificação") { abrirSelecao("RANKING_SERIE") }
-                opcao(R.drawable.ic_menu_target,"Personalização de estudo","Oriente os estudos de toda a turma") { abrir(ProfessorActivity::class.java) }
+                opcao(R.drawable.ic_menu_study,"Minhas turmas","Conteúdos, orientações, atividades e notas escolares") { abrir(ProfessorActivity::class.java) }
+                opcao(R.drawable.ic_menu_chart,"Aprendizagem","Resultados dos quizzes e dificuldades das turmas") { abrirSelecao("GRAFICOS_TURMA") }
+                opcao(R.drawable.ic_menu_trophy,"Ranking","Classificação mensal das suas séries") { abrirSelecao("RANKING_SERIE") }
             }
             else->{Sessao.limpar(this);voltarLogin()}
         }

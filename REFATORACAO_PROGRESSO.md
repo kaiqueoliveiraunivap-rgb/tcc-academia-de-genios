@@ -7,6 +7,7 @@ Branch local: `refatoracao-tcc`. Não houve push. Não executar exclusões em ba
 - Migração aditiva do catálogo pedagógico, progresso, atividades e ranking; associação manual de capítulos no painel da secretaria.
 - Aluno: dashboard real, matérias da série, conteúdos por bimestre, retomada por unidade, estudo direto, atividades e resultados.
 - Professor: turmas próprias, conteúdos, orientação específica ou geral, publicação, conclusão das atividades e dificuldades calculadas pelas respostas.
+- Menu do professor direciona para turmas, aprendizagem e ranking; carregamento da lista usa ciclo de vida da tela e oferece nova tentativa em falhas.
 - Ranking do mês atual recalculado pelas tentativas reais; meses anteriores continuam na tabela histórica. Um conteúdo com várias unidades vale até cinco pontos pela média das melhores notas das unidades.
 - PDFs privados com URL temporária vinculada à sessão; autocadastro público continua bloqueado.
 
