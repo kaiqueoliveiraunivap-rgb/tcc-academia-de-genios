@@ -262,6 +262,8 @@ class   MainActivity : AppCompatActivity() {
             "respostas" to JSONArray().apply { respostas.forEach { put(it) } }.toString()
         )
         if (idTurma > 0) params["id_turma"] = idTurma.toString()
+        intent.getIntExtra("ID_CONTEUDO",0).takeIf { it>0 }?.let { params["id_conteudo"]=it.toString() }
+        intent.getIntExtra("ID_ATIVIDADE",0).takeIf { it>0 }?.let { params["id_atividade"]=it.toString() }
         lifecycleScope.launch {
             val resposta = withContext(Dispatchers.IO) {
                 ApiClient.postComStatus("concluir_estudo.php", params, 20000)

@@ -9,14 +9,22 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 class MenuActivity : AppCompatActivity() {
     private lateinit var opcoes: LinearLayout
+    private var painelAluno: LinearLayout? = null
+    private var versaoProgresso=ProgressoAluno.versao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +32,7 @@ class MenuActivity : AppCompatActivity() {
         setContentView(R.layout.activity_menu)
 
         opcoes=findViewById(R.id.containerOpcoesMenu)
-        findViewById<TextView>(R.id.tvSaudacaoMenu).text="Olá, ${Sessao.nome(this)}. Escolha por onde começar."
+        findViewById<TextView>(R.id.tvSaudacaoMenu).text="Olá, ${Sessao.nome(this).substringBefore(' ')}!"
         findViewById<ImageView>(R.id.btnMinhaContaMenu).setOnClickListener { abrir(MinhaContaActivity::class.java) }
         findViewById<MaterialButton>(R.id.btnSairMenu).setOnClickListener {
             Sessao.encerrar(this); finish()
@@ -36,10 +44,13 @@ class MenuActivity : AppCompatActivity() {
         }
         when(perfil){
             "aluno"->{
-                opcao(R.drawable.ic_menu_study,"Estudar","Escolha uma matéria, frente e capítulo") { abrir(SelecionarMateriaActivity::class.java) }
-                opcao(R.drawable.ic_menu_chart,"Meu desempenho","Acompanhe seus acertos por matéria e capítulo") { abrir(DesempenhoTopicosActivity::class.java) }
-                opcao(R.drawable.ic_menu_study,"Meu histórico","Revise suas respostas e retome os capítulos estudados") { abrir(HistoricoActivity::class.java) }
-                opcao(R.drawable.ic_menu_trophy,"Ranking da minha série","Veja sua posição e pontuação mensal") { abrirSelecao("RANKING_SERIE") }
+                painelAluno=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+                opcoes.addView(painelAluno,0)
+                opcao(R.drawable.ic_menu_study,"Estudar","Matérias e conteúdos da sua série") { abrir(SelecionarMateriaActivity::class.java) }
+                opcao(R.drawable.ic_menu_chart,"Meu progresso","Resultados, dificuldades e histórico") { abrir(DesempenhoTopicosActivity::class.java) }
+                opcao(R.drawable.ic_menu_target,"Atividades","Estudos enviados para sua turma") { abrir(AtividadesActivity::class.java) }
+                opcao(R.drawable.ic_menu_trophy,"Ranking","Classificação mensal da sua série") { abrirSelecao("RANKING_SERIE") }
+                carregarPainelAluno()
             }
             "professor"->{
                 opcao(R.drawable.ic_menu_chart,"Gráficos das turmas","Analise dificuldades por matéria e capítulo") { abrirSelecao("GRAFICOS_TURMA") }
@@ -48,7 +59,123 @@ class MenuActivity : AppCompatActivity() {
             }
             else->{Sessao.limpar(this);voltarLogin()}
         }
-        opcao(R.drawable.ic_menu_web,"Painel da secretaria","Abrir o site de gestão escolar no navegador") { PainelSecretaria.abrir(this) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (painelAluno!=null && versaoProgresso!=ProgressoAluno.versao) {
+            versaoProgresso=ProgressoAluno.versao
+            carregarPainelAluno()
+        }
+    }
+
+    private fun carregarPainelAluno() {
+        val painel=painelAluno ?: return
+        painel.removeAllViews()
+        painel.addView(TextView(this).apply {
+            text="Carregando seu progresso…"; textSize=15f
+            setTextColor(getColor(R.color.TextoSecundario)); setPadding(0,dp(14),0,dp(20))
+        })
+        lifecycleScope.launch {
+            val r=withContext(Dispatchers.IO) {
+                ApiClient.postComStatus("painel_aluno.php",mapOf("token" to Sessao.token(this@MenuActivity)))
+            }
+            if (r.sessaoExpirada) { Sessao.encerrar(this@MenuActivity); return@launch }
+            val json=runCatching { JSONObject(r.corpo.orEmpty()) }.getOrNull()
+            painel.removeAllViews()
+            if (!r.sucesso || json?.optString("status")!="sucesso") {
+                painel.addView(TextView(this@MenuActivity).apply {
+                    text=r.mensagemErro("Não foi possível carregar o progresso. Toque para tentar novamente.")
+                    textSize=15f; setTextColor(getColor(R.color.TextoSecundario))
+                    minHeight=dp(60); setOnClickListener { carregarPainelAluno() }
+                })
+                return@launch
+            }
+            val serie=json.optString("serie").takeIf { it.isNotBlank() && it!="null" }
+            val turma=json.optString("turma").takeIf { it.isNotBlank() && it!="null" }
+            findViewById<TextView>(R.id.tvPerfilMenu).text=listOfNotNull(serie,turma).distinct().joinToString(" · ").ifBlank { "ÁREA DO ALUNO" }
+            val continuar=json.optJSONObject("continuar")
+            val principal=MaterialCardView(this@MenuActivity).apply {
+                radius=dp(18).toFloat(); cardElevation=0f
+                setCardBackgroundColor(getColor(R.color.DestaqueSuave))
+                layoutParams=LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(13) }
+                isClickable=true; isFocusable=true
+                addView(LinearLayout(this@MenuActivity).apply {
+                    orientation=LinearLayout.VERTICAL; setPadding(dp(20),dp(19),dp(20),dp(19))
+                    addView(TextView(this@MenuActivity).apply {
+                        text="CONTINUAR ESTUDANDO"; textSize=12f; typeface=Typeface.DEFAULT_BOLD
+                        letterSpacing=.08f; setTextColor(getColor(R.color.Destaque))
+                    })
+                    addView(TextView(this@MenuActivity).apply {
+                        text=continuar?.optString("nome") ?: "Comece por uma matéria"
+                        textSize=20f; typeface=Typeface.DEFAULT_BOLD
+                        setTextColor(getColor(R.color.TextoPrincipal)); setPadding(0,dp(7),0,dp(5))
+                    })
+                    addView(TextView(this@MenuActivity).apply {
+                        text=continuar?.optString("materia") ?: "Explore os conteúdos disponíveis para sua série."
+                        textSize=14f; setTextColor(getColor(R.color.TextoSecundario))
+                    })
+                })
+                setOnClickListener {
+                    if (continuar!=null) abrirConteudo(continuar)
+                    else abrir(SelecionarMateriaActivity::class.java)
+                }
+            }
+            painel.addView(principal)
+            val total=json.optInt("conteudos_disponiveis")
+            val feitos=json.optInt("conteudos_concluidos")
+            val quizzes=json.optInt("quizzes_realizados")
+            val media=if (json.isNull("aproveitamento_medio")) "Sem resultados ainda"
+                else "${json.optDouble("aproveitamento_medio").toInt()}% de aproveitamento médio"
+            painel.addView(MaterialCardView(this@MenuActivity).apply {
+                radius=dp(16).toFloat(); cardElevation=0f
+                strokeWidth=dp(1); strokeColor=getColor(R.color.BordaButton)
+                setCardBackgroundColor(UiPaleta.superficie())
+                layoutParams=LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(16) }
+                addView(LinearLayout(this@MenuActivity).apply {
+                    orientation=LinearLayout.VERTICAL; setPadding(dp(19),dp(17),dp(19),dp(17))
+                    addView(TextView(this@MenuActivity).apply {
+                        text="SEU PROGRESSO"; textSize=12f; typeface=Typeface.DEFAULT_BOLD
+                        letterSpacing=.08f; setTextColor(getColor(R.color.Destaque))
+                    })
+                    addView(TextView(this@MenuActivity).apply {
+                        text=if(total>0) "$feitos de $total conteúdos concluídos" else "Conteúdos em preparação"
+                        textSize=17f; typeface=Typeface.DEFAULT_BOLD
+                        setTextColor(getColor(R.color.TextoPrincipal)); setPadding(0,dp(8),0,dp(9))
+                    })
+                    if (total>0) addView(ProgressBar(this@MenuActivity,null,android.R.attr.progressBarStyleHorizontal).apply {
+                        max=total; progress=feitos; contentDescription="$feitos de $total conteúdos concluídos"
+                    },LinearLayout.LayoutParams(-1,dp(8)).apply { bottomMargin=dp(11) })
+                    addView(TextView(this@MenuActivity).apply {
+                        text="$quizzes quizzes realizados · $media\n${json.optInt("atividades_pendentes")} atividades pendentes"
+                        textSize=14f; setTextColor(getColor(R.color.TextoSecundario))
+                    })
+                })
+            })
+        }
+    }
+
+    private fun abrirConteudo(conteudo:JSONObject) {
+        lifecycleScope.launch {
+            val id=conteudo.optInt("id_conteudo")
+            val r=withContext(Dispatchers.IO) {
+                ApiClient.postComStatus("catalogo_estudos.php",mapOf(
+                    "token" to Sessao.token(this@MenuActivity),"acao" to "abrir",
+                    "id_conteudo" to id.toString(),"id_turma" to Sessao.idTurma(this@MenuActivity).toString()))
+            }
+            val json=runCatching { JSONObject(r.corpo.orEmpty()) }.getOrNull()
+            if (r.sessaoExpirada) { Sessao.encerrar(this@MenuActivity); return@launch }
+            if (!r.sucesso || json?.optString("status")!="sucesso") {
+                android.widget.Toast.makeText(this@MenuActivity,r.mensagemErro("Não foi possível retomar o estudo."),android.widget.Toast.LENGTH_LONG).show()
+                return@launch
+            }
+            startActivity(Intent(this@MenuActivity,CapitulosActivity::class.java).apply {
+                putExtra("ID_CONTEUDO",id); putExtra("CONTEUDO_NOME",conteudo.optString("nome"))
+                putExtra("ID_CAPITULO_ABRIR",json.getJSONObject("conteudo").getInt("id_capitulo"))
+                putExtra("ID_TURMA",Sessao.idTurma(this@MenuActivity))
+                putExtra("MATERIA",conteudo.optString("materia"))
+            })
+        }
     }
 
     private fun opcao(@DrawableRes icone:Int,titulo:String,descricao:String,click:()->Unit){

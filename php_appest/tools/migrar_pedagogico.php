@@ -81,3 +81,11 @@ $conn->query("CREATE TABLE IF NOT EXISTS ranking_melhor_conteudo (
     FOREIGN KEY (id_aluno) REFERENCES usuario(id_usuario),
     FOREIGN KEY (id_turma) REFERENCES turma(id_turma)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+// O quiz antigo continua válido; o vínculo novo identifica qual conteúdo
+// pedagógico foi estudado sem reescrever tentativas históricas.
+if (!$conn->query("SHOW COLUMNS FROM quiz_estudo LIKE 'id_conteudo'")->num_rows) {
+    $conn->query('ALTER TABLE quiz_estudo ADD COLUMN id_conteudo INT NULL,
+        ADD INDEX idx_quiz_conteudo_mes (id_aluno,id_turma,id_conteudo,criado_em),
+        ADD CONSTRAINT fk_quiz_conteudo FOREIGN KEY (id_conteudo) REFERENCES conteudo_pedagogico(id_conteudo)');
+}

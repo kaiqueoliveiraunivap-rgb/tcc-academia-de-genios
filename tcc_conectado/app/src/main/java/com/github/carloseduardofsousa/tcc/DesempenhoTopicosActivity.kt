@@ -64,7 +64,7 @@ class DesempenhoTopicosActivity : AppCompatActivity() {
             setOnClickListener { finish() }
         })
         root.addView(TextView(this).apply {
-            text=if (detalhado) materia else if (Sessao.ehProfessor(this@DesempenhoTopicosActivity)) "Desempenho da turma" else "Meu desempenho"
+            text=if (detalhado) materia else if (Sessao.ehProfessor(this@DesempenhoTopicosActivity)) "Desempenho da turma" else "Meu progresso"
             textSize=27f; typeface=Typeface.DEFAULT_BOLD
             setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,dp(18),0,dp(4))
         })
@@ -73,6 +73,10 @@ class DesempenhoTopicosActivity : AppCompatActivity() {
                 intent.getStringExtra("NOME_TURMA").orEmpty()
             else Sessao.nome(this@DesempenhoTopicosActivity)
             textSize=16f; setTextColor(UiPaleta.hex("#666680"))
+        })
+        if (!Sessao.ehProfessor(this) && !detalhado) root.addView(Button(this).apply {
+            text="Ver meu histórico e revisar respostas"; isAllCaps=false
+            setOnClickListener { startActivity(Intent(this@DesempenhoTopicosActivity,HistoricoActivity::class.java)) }
         })
         progresso=ProgressBar(this).also { root.addView(it) }
         status=TextView(this).apply {
