@@ -2,7 +2,6 @@ package com.github.carloseduardofsousa.tcc
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
@@ -26,20 +25,20 @@ object EstudoUi {
         .trim()
     fun texto(context: Context, valor: String, tamanho: Float = 16f, destaque: Boolean = false) = TextView(context).apply {
         text = valor; textSize = tamanho
-        setTextColor(UiPaleta.hex(if (destaque) "#1A237E" else "#37474F"))
+        setTextColor(context.getColor(if (destaque) R.color.TextoPrincipal else R.color.TextoSecundario))
         if (destaque) typeface = Typeface.DEFAULT_BOLD
         setLineSpacing(dp(context, 3).toFloat(), 1f)
         setPadding(0, dp(context, 5), 0, dp(context, 7))
     }
     fun botao(context: Context, titulo: String, acao: () -> Unit) = Button(context).apply {
         text = titulo; isAllCaps = false; textSize = 16f; minHeight = dp(context, 48)
-        setTextColor(UiPaleta.hex("#1A237E"))
-        backgroundTintList = ColorStateList.valueOf(UiPaleta.hex("#E8EAF6"))
+        setTextColor(context.getColor(R.color.Destaque))
+        backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.DestaqueSuave))
         setOnClickListener { acao() }
     }
     fun coluna(context: Context) = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
     fun raiz(context: Context) = coluna(context).apply {
-        setBackgroundColor(UiPaleta.hex("#F5F7FA"))
+        setBackgroundColor(context.getColor(R.color.BackGround))
         val p = dp(context, 20); setPadding(p, p, p, p)
         protegerBarras(this)
     }
@@ -59,7 +58,7 @@ object EstudoUi {
         val p = dp(context, 16); setPadding(p, p, p, p)
         background = GradientDrawable().apply {
             setColor(UiPaleta.superficie()); cornerRadius = dp(context, 16).toFloat()
-            setStroke(dp(context, 1), UiPaleta.hex("#E1E3EE"))
+            setStroke(dp(context, 1), context.getColor(R.color.BordaCard))
         }
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(context, 12) }
     }
