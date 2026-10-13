@@ -9,6 +9,7 @@
 // que está matriculado, o professor vê o das turmas dele.
 
 require_once 'auth.php';
+require_once __DIR__.'/ranking_consulta.php';
 
 $usuario = exigirUsuarioLogado($conn);
 
@@ -37,6 +38,13 @@ $stmt->close();
 
 if (!$temVinculo) {
     responderErro("Turma não encontrada para este usuário.", 403);
+}
+$mesAtual=(string)$conn->query("SELECT DATE_FORMAT(NOW(),'%Y-%m') AS mes")->fetch_assoc()['mes'];
+if ($mesReferencia===$mesAtual) {
+    $lista=rankingJustoDoMes($conn,$mesReferencia,$idTurma,null);
+    responderJson(array_map(static fn($item)=>[
+        'nome'=>$item['nome'],'pontos'=>$item['pontos'],'mes_referencia'=>$item['mes_referencia']
+    ],$lista));
 }
 
 $stmt = $conn->prepare(

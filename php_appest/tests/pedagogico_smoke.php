@@ -163,6 +163,23 @@ try {
     [$codigo,$r3]=chamar($quiz,$dados); confirmar($codigo===200 && $r3['acertos']===5,'Quiz da atividade falhou.');
     $pontos=(int)$conn->query('SELECT pontos FROM ranking WHERE id_aluno='.$ids['alunoA'].' AND id_turma='.$ids['turmaA'])->fetch_assoc()['pontos'];
     confirmar($pontos===5,'Ranking somou tentativas ou atividade repetida: '.$pontos);
+    gravar($conn,'UPDATE ranking SET pontos=20 WHERE id_aluno=? AND id_turma=? AND mes_referencia=?',
+        [$ids['alunoA'],$ids['turmaA'],date('Y-m')]);
+    [$codigo,$serieRanking]=chamar($pasta.'ranking_serie.php',['token'=>$tokenA,'serie'=>'2º Ano',
+        'mes_referencia'=>date('Y-m')]);
+    confirmar($codigo===200 && $serieRanking['ranking'][0]['pontos']===5,
+        'Ranking atual exibiu pontos duplicados armazenados antes da correção.');
+    [$codigo,$turmaRanking]=chamar($pasta.'listar_ranking.php',['token'=>$tokenA,
+        'id_turma'=>$ids['turmaA'],'mes_referencia'=>date('Y-m')]);
+    confirmar($codigo===200 && $turmaRanking[0]['pontos']===5,
+        'Ranking da turma exibiu pontuação antiga inflada.');
+    $mesAntigo=date('Y-m',strtotime('first day of last month'));
+    gravar($conn,'INSERT INTO ranking(id_aluno,id_turma,pontos,mes_referencia) VALUES (?,?,?,?)',
+        [$ids['alunoA'],$ids['turmaA'],7,$mesAntigo]);
+    [$codigo,$anteriorRanking]=chamar($pasta.'ranking_serie.php',['token'=>$tokenA,'serie'=>'2º Ano',
+        'mes_referencia'=>$mesAntigo]);
+    confirmar($codigo===200 && $anteriorRanking['ranking'][0]['pontos']===7,
+        'Ranking histórico foi alterado.');
     [$codigo]=coordenacao($coord,'POST',['acao'=>'salvar_conteudo','id'=>$ids['conteudo'],
         'nome'=>'Função quadrática','serie'=>'3º Ano','materia'=>'Matemática','bimestre'=>2,
         'ordem'=>1,'ativo'=>true,'capitulos'=>[$ids['capitulo']]],$coordToken,$csrf);

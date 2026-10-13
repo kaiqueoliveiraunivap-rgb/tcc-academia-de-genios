@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/auth.php';
 require_once __DIR__.'/perfis.php';
+require_once __DIR__.'/ranking_consulta.php';
 
 $usuario=exigirUsuarioLogado($conn);
 $perfil=normalizarPerfil($usuario['tipo_perfil']);
@@ -41,6 +42,13 @@ if ($perfil==='aluno') {
     if (!$vinculado) responderErro('Série não vinculada ao professor.',403);
 }
 
+$mesAtual=(string)$conn->query("SELECT DATE_FORMAT(NOW(),'%Y-%m') AS mes")->fetch_assoc()['mes'];
+if ($mes===$mesAtual) {
+    $lista=rankingJustoDoMes($conn,$mes,null,$serie);
+    foreach ($lista as &$item) $item['proprio']=$item['id_usuario']===(int)$usuario['id_usuario'];
+    unset($item);
+    responderJson(['status'=>'sucesso','serie'=>$serie,'mes_referencia'=>$mes,'ranking'=>$lista]);
+}
 $s=$conn->prepare("SELECT u.id_usuario,u.nome,SUM(r.pontos) AS pontos
     FROM ranking r
     JOIN usuario u ON u.id_usuario=r.id_aluno
