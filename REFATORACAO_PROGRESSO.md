@@ -15,6 +15,7 @@ Branch local: `refatoracao-tcc`. Não houve push. Não executar exclusões em ba
 
 - `php_appest/tests/pedagogico_smoke.php` com `DB_NAME=academia_refatoracao_test`: passou; cobre autorização, CSRF, catálogo, retomada, atividades com duas unidades, quiz idempotente, ranking e PDF.
 - `php_appest/tests/gemini_smoke.php` com chave apenas no ambiente e material sintético: passou; estudo validado, cinco questões e cache reutilizado.
+- `estudo_validacao_test.php` e `estudo_formato_test.php`: passaram; `painel.js` passou em `node --check`.
 - Migração aplicada duas vezes no banco isolado: passou.
 - `:app:assembleDebug --offline -PskipLocalApi=true`: passou. APK instalado e `LoginActivity` aberta no emulador.
 - Lint dos PHP modificados e `git diff --check`: passaram.

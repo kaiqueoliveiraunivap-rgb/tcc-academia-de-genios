@@ -19,8 +19,11 @@ function rankingJustoDoMes(mysqli $conn,string $mes,?int $idTurma,?string $serie
 
     // Capítulos podem ser compartilhados entre conteúdos ou séries.
     // Só atribuímos tentativa antiga sem id_conteudo se houver um vínculo único.
+    $serieConsultada=$serie ?? $tentativas[0]['serie'];
     $s=$conn->prepare('SELECT cp.id_conteudo,cp.serie,cc.id_capitulo
-        FROM conteudo_capitulo cc JOIN conteudo_pedagogico cp ON cp.id_conteudo=cc.id_conteudo');
+        FROM conteudo_capitulo cc JOIN conteudo_pedagogico cp ON cp.id_conteudo=cc.id_conteudo
+        WHERE cp.serie=?');
+    $s->bind_param('s',$serieConsultada);
     $s->execute(); $vinculos=$s->get_result()->fetch_all(MYSQLI_ASSOC); $s->close();
     $porCapitulo=[]; $unidades=[];
     foreach ($vinculos as $v) {
