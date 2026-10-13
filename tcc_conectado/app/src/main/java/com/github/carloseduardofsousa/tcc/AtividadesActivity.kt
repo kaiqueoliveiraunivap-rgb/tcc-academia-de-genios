@@ -138,6 +138,7 @@ class AtividadesActivity : AppCompatActivity() {
                 putExtra("ID_CONTEUDO",item.getInt("id_conteudo"))
                 putExtra("CONTEUDO_NOME",item.getString("nome"))
                 putExtra("ID_CAPITULO_ABRIR",item.getInt("id_capitulo"))
+                putExtra("UNIDADES_JSON",item.getJSONArray("unidades").toString())
                 putExtra("ID_TURMA",item.getInt("id_turma"))
                 putExtra("MATERIA",item.getString("materia"))
             })

@@ -67,9 +67,12 @@ class TurmaResumoAdapter(
         }
 
         h.itemView.setOnClickListener { aoClicar(turma) }
-        h.itemView.contentDescription =
+        h.itemView.contentDescription = if (turma.semNotas) {
+            "Turma ${turma.nomeTurma}, sem notas escolares registradas"
+        } else {
             "Turma ${turma.nomeTurma}, média ${Formato.nota(turma.mediaGeral)}, " +
-            "${Formato.percentual(turma.percentualAprovacao)} de aprovação"
+                "${Formato.percentual(turma.percentualAprovacao)} de aprovação"
+        }
     }
 
     /** A barra é dividida proporcionalmente entre aprovados e abaixo da média. */

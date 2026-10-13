@@ -44,6 +44,17 @@ class ProfessorConteudosActivity : AppCompatActivity() {
             text="Selecione o conteúdo para orientar, publicar uma atividade ou ver resultados."
             textSize=15f; setTextColor(getColor(R.color.TextoSecundario))
         })
+        root.addView(TextView(this).apply {
+            text="Definir orientação geral por matéria"; textSize=15f
+            setTextColor(getColor(R.color.Destaque)); minHeight=dp(48)
+            gravity=Gravity.CENTER_VERTICAL
+            setOnClickListener {
+                startActivity(Intent(this@ProfessorConteudosActivity,EnviarPromptActivity::class.java).apply {
+                    putExtra("ID_TURMA",idTurma)
+                    putExtra("NOME_TURMA",intent.getStringExtra("NOME_TURMA"))
+                })
+            }
+        })
         progresso=ProgressBar(this).apply { visibility=View.GONE }
         root.addView(progresso,LinearLayout.LayoutParams(-2,-2).apply { topMargin=dp(18) })
         status=TextView(this).apply {

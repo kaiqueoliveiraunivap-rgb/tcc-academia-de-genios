@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import org.json.JSONArray
 
 class CapitulosActivity : AppCompatActivity() {
     private lateinit var lista: LinearLayout
@@ -105,6 +106,7 @@ class CapitulosActivity : AppCompatActivity() {
     }
 
     private fun gerar(id: Int, titulo: String) {
+        intent.putExtra("ID_CAPITULO_SELECIONADO",id)
         preparacao.gerar(Sessao.token(this), id, titulo,
             intent.getIntExtra("ID_TURMA", Sessao.idTurma(this)),intent.getIntExtra("ID_CONTEUDO",0))
     }
@@ -260,6 +262,7 @@ class CapitulosActivity : AppCompatActivity() {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(json.getString("fonte_url"))))
             }.onFailure { Toast.makeText(this,"Nenhum navegador disponível",Toast.LENGTH_SHORT).show() }
         })
+        adicionarProximaParte(json.getInt("id_capitulo"))
         lista.addView(EstudoUi.botao(this,"Voltar aos conteúdos") { leitura = null; if(intent.getIntExtra("ID_CONTEUDO",0)>0) finish() else carregar() })
     }
 
@@ -267,7 +270,11 @@ class CapitulosActivity : AppCompatActivity() {
         intent.putExtra("ID_TURMA", json.optInt("id_turma", Sessao.idTurma(this)))
         progresso.visibility = View.GONE
         lista.removeAllViews()
-        status.text = intent.getStringExtra("CONTEUDO_NOME") ?: "${EstudoUi.nomeLivro(json.getString("livro"))}\n${json.getString("capitulo")}"
+        val unidades=unidadesPedagogicas()
+        val indice=unidades.indexOf(intent.getIntExtra("ID_CAPITULO_SELECIONADO",0))
+        status.text = intent.getStringExtra("CONTEUDO_NOME")?.let {
+            if(unidades.size>1 && indice>=0) "$it · Parte ${indice+1} de ${unidades.size}" else it
+        } ?: "${EstudoUi.nomeLivro(json.getString("livro"))}\n${json.getString("capitulo")}"
         val dados = json.getJSONObject("estudo")
         val resumo = dados.getJSONArray("resumo")
         lista.addView(TextView(this).apply {
@@ -359,6 +366,41 @@ class CapitulosActivity : AppCompatActivity() {
                     .onFailure { Toast.makeText(this@CapitulosActivity,"Nenhum navegador disponível",Toast.LENGTH_SHORT).show() }
             }
         })
+        adicionarProximaParte(intent.getIntExtra("ID_CAPITULO_SELECIONADO",0))
         lista.addView(Button(this).apply { text = "Voltar aos conteúdos"; setOnClickListener { estudo = null; preparacao.limpar(); if(intent.getIntExtra("ID_CONTEUDO",0)>0) finish() else carregar() } })
+    }
+
+    private fun unidadesPedagogicas():List<Int> = runCatching {
+        val a=JSONArray(intent.getStringExtra("UNIDADES_JSON") ?: "[]")
+        (0 until a.length()).map { a.getInt(it) }
+    }.getOrDefault(emptyList())
+
+    private fun adicionarProximaParte(idAtual:Int) {
+        val unidades=unidadesPedagogicas()
+        val indice=unidades.indexOf(idAtual)
+        if (indice<0 || indice>=unidades.lastIndex) return
+        lista.addView(EstudoUi.botao(this,"Próxima parte do conteúdo") {
+            val idSeguinte=unidades[indice+1]
+            val idConteudo=intent.getIntExtra("ID_CONTEUDO",0)
+            if (idConteudo<=0 || ocupado) return@botao
+            ocupado=true; progresso.visibility=View.VISIBLE; status.text="Abrindo próxima parte…"
+            lifecycleScope.launch {
+                val r=withContext(Dispatchers.IO) {
+                    ApiClient.postComStatus("catalogo_estudos.php",mapOf(
+                        "token" to Sessao.token(this@CapitulosActivity),"acao" to "avancar",
+                        "id_conteudo" to idConteudo.toString(),"id_capitulo" to idSeguinte.toString(),
+                        "id_turma" to intent.getIntExtra("ID_TURMA",Sessao.idTurma(this@CapitulosActivity)).toString()))
+                }
+                ocupado=false; progresso.visibility=View.GONE
+                if (r.sessaoExpirada) { Sessao.encerrar(this@CapitulosActivity); return@launch }
+                val resposta=runCatching { JSONObject(r.corpo.orEmpty()) }.getOrNull()
+                if (!r.sucesso || resposta?.optString("status")!="sucesso") {
+                    status.text=r.mensagemErro("Não foi possível avançar. Tente novamente.")
+                    return@launch
+                }
+                estudo=null; leitura=null; preparacao.limpar()
+                gerar(idSeguinte,intent.getStringExtra("CONTEUDO_NOME").orEmpty())
+            }
+        })
     }
 }

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__.'/auth.php';
 require_once __DIR__.'/perfis.php';
+require_once __DIR__.'/pedagogia_unidades.php';
 $aluno=exigirUsuarioLogado($conn);
 if (normalizarPerfil($aluno['tipo_perfil'])!=='aluno') responderErro('Acesso exclusivo de alunos.',403);
 $acao=$_POST['acao'] ?? 'listar';
@@ -19,12 +20,13 @@ if ($acao==='abrir') {
         WHERE a.id_atividade=? AND a.ativa=1 ORDER BY cc.ordem,c.ordem LIMIT 1');
     $s->bind_param('ii',$aluno['id_usuario'],$id); $s->execute(); $atividade=$s->get_result()->fetch_assoc(); $s->close();
     if (!$atividade) responderErro('Atividade indisponível para sua turma.',403);
-    $s=$conn->prepare('INSERT INTO progresso_conteudo(id_aluno,id_conteudo,id_capitulo_atual)
-        VALUES (?,?,?) ON DUPLICATE KEY UPDATE ultimo_acesso=NOW()');
-    $s->bind_param('iii',$aluno['id_usuario'],$atividade['id_conteudo'],$atividade['id_capitulo']); $s->execute(); $s->close();
+    $conteudo=unidadesDoConteudoAluno($conn,$aluno['id_usuario'],(int)$atividade['id_turma'],(int)$atividade['id_conteudo']);
+    if (!$conteudo) responderErro('Conteúdo da atividade indisponível.',403);
+    $conteudo=acessarConteudoAluno($conn,$aluno['id_usuario'],$conteudo);
     responderJson(['status'=>'sucesso','atividade'=>[
         'id_atividade'=>(int)$atividade['id_atividade'],'id_conteudo'=>(int)$atividade['id_conteudo'],
-        'id_turma'=>(int)$atividade['id_turma'],'id_capitulo'=>(int)$atividade['id_capitulo'],
+        'id_turma'=>(int)$atividade['id_turma'],'id_capitulo'=>$conteudo['id_capitulo'],
+        'unidades'=>$conteudo['unidades'],'unidade_atual'=>$conteudo['unidade_atual'],
         'titulo'=>$atividade['titulo'],'nome'=>$atividade['nome'],'materia'=>$atividade['materia']
     ]]);
 }

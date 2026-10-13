@@ -28,6 +28,7 @@ class ResultadoActivity : AppCompatActivity() {
         val btnGraficos = findViewById<Button>(R.id.btnGraficos)
         val btnMenu     = findViewById<Button>(R.id.btnMenu)
         val btnRevisar = findViewById<Button>(R.id.btnRevisar)
+        findViewById<Button>(R.id.btnVoltarEstudo).setOnClickListener { finish() }
         val idQuiz = intent.getIntExtra("ID_QUIZ", 0)
         btnRevisar.visibility = if (idQuiz > 0) View.VISIBLE else View.GONE
         btnRevisar.setOnClickListener {
@@ -39,10 +40,10 @@ class ResultadoActivity : AppCompatActivity() {
 
         txtPlacar.text   = "$acertos / $total"
         txtMensagem.text = when {
-            percentual == 100 -> "Perfeito! \uD83C\uDFC6"
-            percentual >= 70  -> "Muito bem! \uD83D\uDE04"
-            percentual >= 50  -> "Quase la! \uD83D\uDCAA"
-            else              -> "Continue praticando! \uD83D\uDCDA"
+            percentual == 100 -> "Excelente! Você acertou todas."
+            percentual >= 70  -> "Muito bem! Revise o que faltou."
+            percentual >= 50  -> "Bom começo. Vale revisar e tentar novamente."
+            else              -> "Continue estudando e pratique novamente."
         }
 
         btnRanking.setOnClickListener {

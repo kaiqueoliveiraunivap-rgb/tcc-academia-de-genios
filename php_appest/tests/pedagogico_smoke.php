@@ -127,6 +127,7 @@ try {
     $dados=['token'=>$tokenA,'id_estudo'=>$ids['estudo'],'id_conteudo'=>$ids['conteudo'],'id_turma'=>$ids['turmaA']];
     $dados['tentativa']='11111111-1111-4111-8111-'.substr(hash('sha256',$sufixo),0,12);
     $dados['respostas']=json_encode([0,0,1,1,1]);
+    $dados['acertos']=5; // Valor forjado pelo cliente não pode definir a pontuação.
     [$codigo,$r1]=chamar($quiz,$dados); confirmar($codigo===200 && $r1['acertos']===2,'Primeiro quiz falhou.');
     [$codigo,$reenvio]=chamar($quiz,$dados); confirmar($codigo===200 && $reenvio['id_quiz']===$r1['id_quiz'],'Reenvio criou outra tentativa.');
     $dados['tentativa']='22222222-2222-4222-8222-'.substr(hash('sha256',$sufixo),0,12);
@@ -137,6 +138,10 @@ try {
     [$codigo,$r3]=chamar($quiz,$dados); confirmar($codigo===200 && $r3['acertos']===5,'Quiz da atividade falhou.');
     $pontos=(int)$conn->query('SELECT pontos FROM ranking WHERE id_aluno='.$ids['alunoA'].' AND id_turma='.$ids['turmaA'])->fetch_assoc()['pontos'];
     confirmar($pontos===5,'Ranking somou tentativas ou atividade repetida: '.$pontos);
+    [$codigo]=coordenacao($coord,'POST',['acao'=>'salvar_conteudo','id'=>$ids['conteudo'],
+        'nome'=>'Função quadrática','serie'=>'3º Ano','materia'=>'Matemática','bimestre'=>2,
+        'ordem'=>1,'ativo'=>true,'capitulos'=>[$ids['capitulo']]],$coordToken,$csrf);
+    confirmar($codigo===409,'Secretaria alterou a série de um conteúdo com histórico.');
     [$codigo,$atv]=chamar($pasta.'atividades_aluno.php',['token'=>$tokenA]);
     confirmar($codigo===200 && $atv['atividades'][0]['estado']==='concluida','Atividade não foi concluída.');
     [$codigo,$painel]=chamar($pasta.'painel_aluno.php',['token'=>$tokenA]);
@@ -147,6 +152,20 @@ try {
     confirmar($codigo===200 && $detalhe['desempenho']['alunos']===1 &&
         $detalhe['desempenho']['respostas']===15 && $detalhe['atividades'][0]['concluintes']===1,
         'Relatório do professor não refletiu respostas reais.');
+    $ids['capitulo2']=gravar($conn,'INSERT INTO capitulo_livro(id_livro,ordem,titulo,paginas_json,revisado) VALUES (?,?,?,?,1)',
+        [$ids['livro'],2,'Gráficos da função',json_encode([['pagina'=>2,'texto'=>'Exemplo de gráfico.']])]);
+    gravar($conn,'INSERT INTO conteudo_capitulo(id_conteudo,id_capitulo,ordem) VALUES (?,?,1)',[$ids['conteudo'],$ids['capitulo2']]);
+    [$codigo,$aberto]=chamar($base,['token'=>$tokenA,'acao'=>'abrir','id_conteudo'=>$ids['conteudo']]);
+    confirmar($codigo===200 && count($aberto['conteudo']['unidades'])===2,'Conteúdo com duas unidades não foi listado.');
+    [$codigo,$avancou]=chamar($base,['token'=>$tokenA,'acao'=>'avancar','id_conteudo'=>$ids['conteudo'],
+        'id_capitulo'=>$ids['capitulo2']]);
+    confirmar($codigo===200 && $avancou['conteudo']['id_capitulo']===$ids['capitulo2'] &&
+        $avancou['conteudo']['unidade_atual']===2,'Avanço da unidade não persistiu.');
+    [$codigo,$retomado]=chamar($base,['token'=>$tokenA,'acao'=>'abrir','id_conteudo'=>$ids['conteudo']]);
+    confirmar($codigo===200 && $retomado['conteudo']['id_capitulo']===$ids['capitulo2'],'Retomada da segunda unidade falhou.');
+    [$codigo]=chamar($base,['token'=>$tokenB,'acao'=>'avancar','id_conteudo'=>$ids['conteudo'],
+        'id_capitulo'=>$ids['capitulo2']]);
+    confirmar($codigo===403,'Aluno de outra série avançou a unidade.');
     echo "OK: aluno, professor, orientação, atividade, quiz idempotente, relatório e ranking.\n";
 } finally {
     if (isset($ids['alunoA'])) {
@@ -164,6 +183,7 @@ try {
     if (isset($ids['alunoA'],$ids['conteudo'])) gravar($conn,'DELETE FROM progresso_conteudo WHERE id_aluno=? AND id_conteudo=?',[$ids['alunoA'],$ids['conteudo']]);
     if (isset($ids['conteudo'])) { gravar($conn,'DELETE FROM conteudo_capitulo WHERE id_conteudo=?',[$ids['conteudo']]); gravar($conn,'DELETE FROM conteudo_pedagogico WHERE id_conteudo=?',[$ids['conteudo']]); }
     if (isset($ids['capitulo'])) gravar($conn,'DELETE FROM capitulo_livro WHERE id_capitulo=?',[$ids['capitulo']]);
+    if (isset($ids['capitulo2'])) gravar($conn,'DELETE FROM capitulo_livro WHERE id_capitulo=?',[$ids['capitulo2']]);
     if (isset($ids['livro'])) gravar($conn,'DELETE FROM livro_didatico WHERE id_livro=?',[$ids['livro']]);
     foreach (['alunoA','alunoB'] as $aluno) if (isset($ids[$aluno])) { gravar($conn,'DELETE FROM sessao WHERE id_usuario=?',[$ids[$aluno]]); gravar($conn,'DELETE FROM matricula WHERE id_aluno=?',[$ids[$aluno]]); }
     if (isset($ids['prof'])) gravar($conn,'DELETE FROM sessao WHERE id_usuario=?',[$ids['prof']]);

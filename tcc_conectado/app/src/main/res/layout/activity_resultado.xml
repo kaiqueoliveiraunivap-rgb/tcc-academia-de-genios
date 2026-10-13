@@ -14,6 +14,9 @@
         <Button android:id="@+id/btnRevisar" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Revisar minhas respostas" android:textAllCaps="false" android:textSize="16sp" android:minHeight="48dp"
             android:padding="12dp" android:backgroundTint="@color/btnSelecionado" android:textColor="@color/TextoNoPrimario" android:layout_marginBottom="12dp"/>
+        <Button android:id="@+id/btnVoltarEstudo" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Voltar ao estudo" android:textAllCaps="false" android:textSize="16sp" android:minHeight="48dp"
+            android:padding="12dp" android:backgroundTint="@color/DestaqueSuave" android:textColor="@color/btnSelecionado" android:layout_marginBottom="10dp"/>
         <Button android:id="@+id/btnHistorico" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Ver meu histórico" android:textAllCaps="false" android:textSize="16sp" android:minHeight="48dp"
             android:padding="12dp" android:backgroundTint="@color/DestaqueSuave" android:textColor="@color/btnSelecionado" android:layout_marginBottom="10dp"/>

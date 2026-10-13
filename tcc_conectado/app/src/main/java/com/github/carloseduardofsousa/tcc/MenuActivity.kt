@@ -159,9 +159,11 @@ class MenuActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val id=conteudo.optInt("id_conteudo")
             val r=withContext(Dispatchers.IO) {
-                ApiClient.postComStatus("catalogo_estudos.php",mapOf(
+                val params=mutableMapOf(
                     "token" to Sessao.token(this@MenuActivity),"acao" to "abrir",
-                    "id_conteudo" to id.toString(),"id_turma" to Sessao.idTurma(this@MenuActivity).toString()))
+                    "id_conteudo" to id.toString())
+                Sessao.idTurma(this@MenuActivity).takeIf { it>0 }?.let { params["id_turma"]=it.toString() }
+                ApiClient.postComStatus("catalogo_estudos.php",params)
             }
             val json=runCatching { JSONObject(r.corpo.orEmpty()) }.getOrNull()
             if (r.sessaoExpirada) { Sessao.encerrar(this@MenuActivity); return@launch }
@@ -172,6 +174,7 @@ class MenuActivity : AppCompatActivity() {
             startActivity(Intent(this@MenuActivity,CapitulosActivity::class.java).apply {
                 putExtra("ID_CONTEUDO",id); putExtra("CONTEUDO_NOME",conteudo.optString("nome"))
                 putExtra("ID_CAPITULO_ABRIR",json.getJSONObject("conteudo").getInt("id_capitulo"))
+                putExtra("UNIDADES_JSON",json.getJSONObject("conteudo").getJSONArray("unidades").toString())
                 putExtra("ID_TURMA",Sessao.idTurma(this@MenuActivity))
                 putExtra("MATERIA",conteudo.optString("materia"))
             })

@@ -19,7 +19,8 @@ if (isset($_POST['email']) && isset($_POST['senha'])) {
     $senha = $_POST['senha'];
 
     $sql = "SELECT u.id_usuario, u.nome, u.email, u.senha, u.tipo_perfil,
-                   (SELECT MIN(m.id_turma) FROM matricula m WHERE m.id_aluno=u.id_usuario) AS id_turma
+                   (SELECT m.id_turma FROM matricula m JOIN turma t ON t.id_turma=m.id_turma
+                    WHERE m.id_aluno=u.id_usuario ORDER BY t.ano_letivo DESC,t.id_turma DESC LIMIT 1) AS id_turma
             FROM usuario u
             WHERE u.email = ? AND u.excluido_em IS NULL LIMIT 1";
 

@@ -76,11 +76,11 @@ class ConteudosActivity : AppCompatActivity() {
         lista.removeAllViews()
         lifecycleScope.launch {
             val r=withContext(Dispatchers.IO) {
-                ApiClient.postComStatus("catalogo_estudos.php",mapOf(
+                val params=mutableMapOf(
                     "token" to Sessao.token(this@ConteudosActivity),
-                    "acao" to "conteudos", "materia" to materia,
-                    "id_turma" to Sessao.idTurma(this@ConteudosActivity).toString()
-                ))
+                    "acao" to "conteudos", "materia" to materia)
+                Sessao.idTurma(this@ConteudosActivity).takeIf { it>0 }?.let { params["id_turma"]=it.toString() }
+                ApiClient.postComStatus("catalogo_estudos.php",params)
             }
             ocupado=false; progresso.visibility=View.GONE
             if (r.sessaoExpirada) { Sessao.encerrar(this@ConteudosActivity); return@launch }
@@ -143,11 +143,11 @@ class ConteudosActivity : AppCompatActivity() {
         ocupado=true; progresso.visibility=View.VISIBLE; aviso.text="Abrindo conteúdo…"
         lifecycleScope.launch {
             val r=withContext(Dispatchers.IO) {
-                ApiClient.postComStatus("catalogo_estudos.php",mapOf(
+                val params=mutableMapOf(
                     "token" to Sessao.token(this@ConteudosActivity), "acao" to "abrir",
-                    "id_conteudo" to id.toString(),
-                    "id_turma" to Sessao.idTurma(this@ConteudosActivity).toString()
-                ))
+                    "id_conteudo" to id.toString())
+                Sessao.idTurma(this@ConteudosActivity).takeIf { it>0 }?.let { params["id_turma"]=it.toString() }
+                ApiClient.postComStatus("catalogo_estudos.php",params)
             }
             ocupado=false; progresso.visibility=View.GONE
             if (r.sessaoExpirada) { Sessao.encerrar(this@ConteudosActivity); return@launch }
@@ -161,6 +161,7 @@ class ConteudosActivity : AppCompatActivity() {
                 putExtra("ID_CONTEUDO",id)
                 putExtra("CONTEUDO_NOME",conteudo.getString("nome"))
                 putExtra("ID_CAPITULO_ABRIR",conteudo.getInt("id_capitulo"))
+                putExtra("UNIDADES_JSON",conteudo.getJSONArray("unidades").toString())
                 putExtra("ID_TURMA",Sessao.idTurma(this@ConteudosActivity))
                 putExtra("MATERIA",materia)
             })

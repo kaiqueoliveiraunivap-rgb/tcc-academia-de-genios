@@ -1,11 +1,12 @@
 <?php
 require_once __DIR__.'/auth.php';
 require_once __DIR__.'/perfis.php';
+require_once __DIR__.'/pedagogia_unidades.php';
 
 $aluno=exigirUsuarioLogado($conn);
 if (normalizarPerfil($aluno['tipo_perfil'])!=='aluno') responderErro('Acesso exclusivo de alunos.',403);
 $acao=$_POST['acao'] ?? 'materias';
-if (!in_array($acao,['materias','conteudos','abrir'],true)) responderErro('Ação inválida.',422);
+if (!in_array($acao,['materias','conteudos','abrir','avancar'],true)) responderErro('Ação inválida.',422);
 $idTurma=inteiroDoPost('id_turma');
 if (isset($_POST['id_turma']) && !$idTurma) responderErro('Turma inválida.',422);
 
@@ -22,32 +23,16 @@ if (!$turma) responderErro('Aluno sem matrícula nessa turma.',403);
 $serie=trim((string)$turma['serie']);
 if ($serie==='') responderJson(['status'=>'sucesso','serie'=>null,'turma'=>$turma['nome_turma'],'materias'=>[],'conteudos'=>[],'mensagem'=>'A secretaria ainda não informou a série desta turma.']);
 
-if ($acao==='abrir') {
+if ($acao==='abrir' || $acao==='avancar') {
     $idConteudo=inteiroDoPost('id_conteudo');
     if (!$idConteudo) responderErro('Conteúdo inválido.',422);
-    $s=$conn->prepare('SELECT cp.id_conteudo,cp.nome,cp.materia,cp.bimestre,cc.id_capitulo
-      FROM conteudo_pedagogico cp JOIN conteudo_capitulo cc ON cc.id_conteudo=cp.id_conteudo
-      JOIN capitulo_livro c ON c.id_capitulo=cc.id_capitulo AND c.revisado=1
-      JOIN livro_didatico l ON l.id_livro=c.id_livro AND l.ativo=1 AND l.materia=cp.materia
-      WHERE cp.id_conteudo=? AND cp.serie=? AND cp.ativo=1
-      ORDER BY cc.ordem,c.ordem,c.id_capitulo LIMIT 1');
-    $s->bind_param('is',$idConteudo,$serie); $s->execute(); $conteudo=$s->get_result()->fetch_assoc(); $s->close();
+    $conteudo=unidadesDoConteudoAluno($conn,$aluno['id_usuario'],(int)$turma['id_turma'],$idConteudo);
     if (!$conteudo) responderErro('Conteúdo indisponível para sua série.',403);
-    $s=$conn->prepare('INSERT INTO progresso_conteudo (id_aluno,id_conteudo,id_capitulo_atual)
-      VALUES (?,?,?) ON DUPLICATE KEY UPDATE ultimo_acesso=NOW()');
-    $s->bind_param('iii',$aluno['id_usuario'],$idConteudo,$conteudo['id_capitulo']); $s->execute(); $s->close();
-    $s=$conn->prepare('SELECT p.id_capitulo_atual FROM progresso_conteudo p
-      JOIN conteudo_capitulo cc ON cc.id_conteudo=p.id_conteudo AND cc.id_capitulo=p.id_capitulo_atual
-      JOIN capitulo_livro c ON c.id_capitulo=cc.id_capitulo AND c.revisado=1
-      JOIN livro_didatico l ON l.id_livro=c.id_livro AND l.ativo=1
-      WHERE p.id_aluno=? AND p.id_conteudo=?');
-    $s->bind_param('ii',$aluno['id_usuario'],$idConteudo); $s->execute();
-    $capituloAtual=$s->get_result()->fetch_assoc(); $s->close();
-    responderJson(['status'=>'sucesso','conteudo'=>[
-        'id_conteudo'=>$idConteudo,'nome'=>$conteudo['nome'],'materia'=>$conteudo['materia'],
-        'bimestre'=>$conteudo['bimestre']===null ? null : (int)$conteudo['bimestre'],
-        'id_capitulo'=>(int)($capituloAtual['id_capitulo_atual'] ?? $conteudo['id_capitulo'])
-    ]]);
+    $idCapitulo=$acao==='avancar' ? inteiroDoPost('id_capitulo') : null;
+    if ($acao==='avancar' && !$idCapitulo) responderErro('Unidade inválida.',422);
+    $conteudo=acessarConteudoAluno($conn,$aluno['id_usuario'],$conteudo,$idCapitulo);
+    if (!$conteudo) responderErro('Unidade indisponível neste conteúdo.',403);
+    responderJson(['status'=>'sucesso','conteudo'=>$conteudo]);
 }
 
 // Somente capítulos revisados de livros ativos entram no catálogo do aluno.

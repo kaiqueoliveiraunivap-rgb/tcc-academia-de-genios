@@ -148,11 +148,16 @@ class DashboardTurmasActivity : AppCompatActivity() {
 
         txtKpiTurmas.text    = dados.turmas.size.toString()
         txtKpiAlunos.text    = dados.totalAlunos.toString()
-        txtKpiMedia.text     = Formato.nota(dados.mediaGeral)
-        txtKpiAprovacao.text = Formato.percentual(dados.percentualAprovacaoGeral)
+        val temNotas = dados.turmas.any { !it.semNotas }
+        txtKpiMedia.text     = if (temNotas) Formato.nota(dados.mediaGeral) else "—"
+        txtKpiAprovacao.text = if (temNotas) Formato.percentual(dados.percentualAprovacaoGeral) else "—"
+        txtLegendaComparativo.text = if (temNotas) "Comparação das turmas com notas registradas" else "Nenhuma nota escolar registrada ainda."
+        chartComparativo.visibility = if (temNotas) View.VISIBLE else View.GONE
+        chartEvolucao.visibility = if (temNotas) View.VISIBLE else View.GONE
+        chartAprovacao.visibility = if (temNotas) View.VISIBLE else View.GONE
 
         aplicarOrdenacao()
-        montarGraficoEvolucao(dados.turmas)
+        if (temNotas) montarGraficoEvolucao(dados.turmas.filterNot { it.semNotas })
     }
 
     // ── Ordenação ───────────────────────────────────────────────────────────
@@ -182,8 +187,11 @@ class DashboardTurmasActivity : AppCompatActivity() {
             adapter?.atualizar(ordenadas)
         }
 
-        montarGraficoComparativo(ordenadas)
-        montarGraficoAprovacao(ordenadas)
+        val avaliadas = ordenadas.filterNot { it.semNotas }
+        if (avaliadas.isNotEmpty()) {
+            montarGraficoComparativo(avaliadas)
+            montarGraficoAprovacao(avaliadas)
+        }
     }
 
     private fun abrirAnalise(turma: TurmaResumo) {

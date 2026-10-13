@@ -90,56 +90,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
-            android:id="@+id/btnGerarPreview"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:text="Pré-visualizar orientação"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="@color/BackGround"
-            android:backgroundTint="@color/btnSelecionado"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Preview -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardPreview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@color/CardFundo"
-            android:visibility="gone"
-            android:layout_marginBottom="20dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="18dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Orientação para toda a turma:"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/Destaque"
-                    android:layout_marginBottom="8dp" />
-
-                <TextView
-                    android:id="@+id/txtPreviewPrompt"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textSize="14sp"
-                    android:textColor="@color/ChipTexto"
-                    android:lineSpacingExtra="4dp" />
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
         <ProgressBar
             android:id="@+id/progressBarEnviarPrompt"
             android:layout_width="wrap_content"

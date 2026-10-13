@@ -15,7 +15,6 @@ import android.widget.AdapterView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.cardview.widget.CardView
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
@@ -30,22 +29,17 @@ class EnviarPromptActivity : AppCompatActivity() {
 
     private lateinit var containerMaterias: LinearLayout
     private lateinit var etInstrucao: TextInputEditText
-    private lateinit var btnGerarPreview: Button
-    private lateinit var cardPreview: CardView
-    private lateinit var txtPreviewPrompt: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var btnEnviar: Button
     private lateinit var spinnerLivro: Spinner
     private lateinit var spinnerBimestre: Spinner
     private var livros = listOf(0 to "Todos os livros da matéria")
 
-    private var nomeProfessor = ""
     private var idTurma = 0
     private var nomeTurma = ""
     private var enviando = false
 
     private var materiaSelecionada: String? = null
-    private var promptFinalAtual: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +47,6 @@ class EnviarPromptActivity : AppCompatActivity() {
         NavegacaoUi.adicionarVoltar(this)
 
         if (!Sessao.ehProfessor(this)) { Sessao.encerrar(this); finish(); return }
-        nomeProfessor = Sessao.nome(this)
         idTurma       = intent.getIntExtra("ID_TURMA", 0)
         nomeTurma     = intent.getStringExtra("NOME_TURMA") ?: "Turma"
         if (idTurma <= 0) { finish(); return }
@@ -64,9 +57,6 @@ class EnviarPromptActivity : AppCompatActivity() {
 
         containerMaterias = findViewById(R.id.containerMaterias)
         etInstrucao       = findViewById(R.id.etInstrucaoProfessor)
-        btnGerarPreview   = findViewById(R.id.btnGerarPreview)
-        cardPreview       = findViewById(R.id.cardPreview)
-        txtPreviewPrompt  = findViewById(R.id.txtPreviewPrompt)
         progressBar       = findViewById(R.id.progressBarEnviarPrompt)
         btnEnviar         = findViewById(R.id.btnEnviarPrompt)
         spinnerLivro      = findViewById(R.id.spinnerLivroPrompt)
@@ -76,19 +66,16 @@ class EnviarPromptActivity : AppCompatActivity() {
         spinnerLivro.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, livros.map { it.second })
         val aoSelecionar = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) = invalidarPreview()
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) = atualizarBotao()
         }
         spinnerLivro.onItemSelectedListener = aoSelecionar
         spinnerBimestre.onItemSelectedListener = aoSelecionar
 
         montarChipsMaterias()
 
-        btnGerarPreview.setOnClickListener { gerarPreview() }
         btnEnviar.setOnClickListener { enviarPrompt() }
-
-        // Qualquer alteração depois de gerar a prévia invalida o prompt já montado,
-        // evitando enviar um texto que não reflete mais o que está na tela.
-        etInstrucao.addTextChangedListener { invalidarPreview() }
+        btnEnviar.text = "Salvar orientação geral"
+        etInstrucao.addTextChangedListener { atualizarBotao() }
     }
 
     private fun montarChipsMaterias() {
@@ -154,7 +141,7 @@ class EnviarPromptActivity : AppCompatActivity() {
                 }
                 chip.setTextColor(Color.WHITE)
                 (chip.background as GradientDrawable).setColor(UiPaleta.hex("#5C6BC0"))
-                invalidarPreview()
+                atualizarBotao()
             }
             containerMaterias.addView(chip)
         }
@@ -179,62 +166,27 @@ class EnviarPromptActivity : AppCompatActivity() {
             }
             spinnerLivro.adapter = ArrayAdapter(this@EnviarPromptActivity, android.R.layout.simple_spinner_dropdown_item, livros.map { it.second })
             spinnerLivro.isEnabled = true
-            invalidarPreview()
+            atualizarBotao()
         }
     }
 
-    private fun invalidarPreview() {
-        if (promptFinalAtual != null) {
-            promptFinalAtual = null
-            cardPreview.visibility = View.GONE
-            btnEnviar.isEnabled = false
-            btnEnviar.alpha = 0.5f
-        }
-    }
-
-    private fun gerarPreview() {
-        val materia = materiaSelecionada
-        val instrucao = etInstrucao.text?.toString()?.trim().orEmpty()
-
-        if (materia == null) {
-            Toast.makeText(this, "Escolha a matéria.", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (instrucao.isEmpty()) {
-            Toast.makeText(this, "Escreva o que a turma precisa reforçar.", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val livro = livros.getOrNull(spinnerLivro.selectedItemPosition)?.takeIf { it.first > 0 }
-        val bimestre = spinnerBimestre.selectedItemPosition.takeIf { it > 0 }
-        if (bimestre != null && livro == null) {
-            Toast.makeText(this, "Escolha o livro deste bimestre.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val prompt = PromptProfessorBuilder.montar(
-            nomeTurma       = nomeTurma,
-            nomeProfessor   = nomeProfessor,
-            materia         = materia,
-            instrucaoBruta  = instrucao,
-            livro = livro?.second,
-            bimestre = bimestre
-        )
-
-        promptFinalAtual = prompt
-        txtPreviewPrompt.text = prompt
-        cardPreview.visibility = View.VISIBLE
-        btnEnviar.isEnabled = true
-        btnEnviar.alpha = 1f
+    private fun atualizarBotao() {
+        val valido=materiaSelecionada!=null && !etInstrucao.text.isNullOrBlank() && !enviando
+        btnEnviar.isEnabled=valido
+        btnEnviar.alpha=if(valido)1f else .5f
     }
 
     private fun enviarPrompt() {
-        if (enviando || promptFinalAtual == null) return
+        if (enviando) return
         val materia = materiaSelecionada ?: return
         val instrucao = etInstrucao.text?.toString()?.trim().orEmpty()
+        if (instrucao.isEmpty()) { etInstrucao.error="Escreva uma orientação."; return }
+        if (spinnerBimestre.selectedItemPosition>0 && livros.getOrNull(spinnerLivro.selectedItemPosition)?.first==0) {
+            Toast.makeText(this,"Escolha o livro deste bimestre.",Toast.LENGTH_SHORT).show(); return
+        }
         enviando = true
         progressBar.visibility = View.VISIBLE
         btnEnviar.isEnabled = false
-        btnGerarPreview.isEnabled = false
         etInstrucao.isEnabled = false
         val parametros = mutableMapOf(
             "token" to Sessao.token(this), "id_turma" to idTurma.toString(),
@@ -249,7 +201,7 @@ class EnviarPromptActivity : AppCompatActivity() {
             enviando = false
             progressBar.visibility = View.GONE
             btnEnviar.isEnabled = true
-            btnGerarPreview.isEnabled = true
+            atualizarBotao()
             etInstrucao.isEnabled = true
             if (resposta.sessaoExpirada) {
                 Sessao.encerrar(this@EnviarPromptActivity); finish(); return@launch

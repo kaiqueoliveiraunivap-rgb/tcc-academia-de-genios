@@ -177,7 +177,13 @@ try {
         if ($id) {
             $anterior=linhas('SELECT serie,materia FROM conteudo_pedagogico WHERE id_conteudo=? FOR UPDATE',[$id])[0] ?? null;
             if (!$anterior) falha('Conteúdo não encontrado.',404);
-            if (($anterior['serie']!==$serie || $anterior['materia']!==$materia) && linhas('SELECT 1 FROM atividade_publicada WHERE id_conteudo=? LIMIT 1',[$id])) falha('Este conteúdo já possui atividades. Mantenha sua série e matéria.');
+            $atuais=array_map('intval',array_column(linhas('SELECT id_capitulo FROM conteudo_capitulo WHERE id_conteudo=? ORDER BY ordem',[$id]),'id_capitulo'));
+            $possuiHistorico=linhas('SELECT 1 FROM quiz_estudo WHERE id_conteudo=? LIMIT 1',[$id])
+                || linhas('SELECT 1 FROM progresso_conteudo WHERE id_conteudo=? LIMIT 1',[$id])
+                || linhas('SELECT 1 FROM atividade_publicada WHERE id_conteudo=? LIMIT 1',[$id]);
+            if ($possuiHistorico && ($anterior['serie']!==$serie || $anterior['materia']!==$materia || $atuais!==$capitulos)) {
+                falha('Este conteúdo já possui estudos ou atividades. Preserve série, matéria e capítulos para manter o histórico correto.',409);
+            }
             cq('UPDATE conteudo_pedagogico SET nome=?,serie=?,materia=?,bimestre=?,ordem=?,ativo=? WHERE id_conteudo=?',[$nome,$serie,$materia,$bimestre,$ordem,$ativo,$id]);
             cq('DELETE FROM conteudo_capitulo WHERE id_conteudo=?',[$id]);
         } else {
