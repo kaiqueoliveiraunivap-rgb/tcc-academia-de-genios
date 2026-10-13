@@ -33,6 +33,7 @@
             android:exported="false"/>
 
         <activity android:name=".CapitulosActivity" android:exported="false"/>
+        <activity android:name=".ConteudosActivity" android:exported="false"/>
         <activity android:name=".HistoricoActivity" android:exported="false"/>
         <activity android:name=".RevisaoQuizActivity" android:exported="false"/>
         <activity android:name=".FrentesActivity" android:exported="false"/>

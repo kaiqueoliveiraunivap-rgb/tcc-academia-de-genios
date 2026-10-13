@@ -44,7 +44,7 @@ class CapitulosActivity : AppCompatActivity() {
         }
         root.addView(TextView(this).apply { text="‹  Voltar"; textSize=16f; setTextColor(getColor(R.color.Destaque)); minHeight=EstudoUi.dp(this@CapitulosActivity,48); gravity=android.view.Gravity.CENTER_VERTICAL; setOnClickListener { finish() } })
         root.addView(TextView(this).apply {
-            text = intent.getStringExtra("FRENTE") ?: "Capítulos"
+            text = intent.getStringExtra("CONTEUDO_NOME") ?: intent.getStringExtra("FRENTE") ?: "Capítulos"
             textSize = 26f; typeface = Typeface.DEFAULT_BOLD
             setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,dp(18),0,dp(4))
         })
@@ -70,7 +70,8 @@ class CapitulosActivity : AppCompatActivity() {
             mostrarFalhaGeracao(savedInstanceState.getInt("capitulo_pendente"), savedInstanceState.getString("titulo_pendente").orEmpty(), "A preparação foi interrompida. Toque em tentar novamente para continuar neste capítulo.")
         } else if (abrir > 0) {
             intent.removeExtra("ID_CAPITULO_ABRIR")
-            lerCapitulo(abrir)
+            if (intent.getIntExtra("ID_CONTEUDO",0)>0) gerar(abrir,intent.getStringExtra("CONTEUDO_NOME").orEmpty())
+            else lerCapitulo(abrir)
         } else carregar()
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -111,7 +112,8 @@ class CapitulosActivity : AppCompatActivity() {
         progresso.visibility = View.GONE; lista.removeAllViews()
         status.text = "$titulo\n$mensagem"
         lista.addView(EstudoUi.botao(this, "Tentar novamente") { gerar(id, titulo) })
-        lista.addView(EstudoUi.botao(this, "Escolher outro capítulo") { preparacao.limpar(); carregar() })
+        lista.addView(EstudoUi.botao(this, "Ler material original") { preparacao.limpar(); lerCapitulo(id) })
+        lista.addView(EstudoUi.botao(this, "Voltar aos conteúdos") { finish() })
     }
 
     override fun onResume() {
@@ -257,18 +259,18 @@ class CapitulosActivity : AppCompatActivity() {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(json.getString("fonte_url"))))
             }.onFailure { Toast.makeText(this,"Nenhum navegador disponível",Toast.LENGTH_SHORT).show() }
         })
-        lista.addView(EstudoUi.botao(this,"Escolher outro capítulo") { leitura = null; carregar() })
+        lista.addView(EstudoUi.botao(this,"Voltar aos conteúdos") { leitura = null; if(intent.getIntExtra("ID_CONTEUDO",0)>0) finish() else carregar() })
     }
 
     private fun mostrarEstudo(json: JSONObject) {
         intent.putExtra("ID_TURMA", json.optInt("id_turma", Sessao.idTurma(this)))
         progresso.visibility = View.GONE
         lista.removeAllViews()
-        status.text = "${EstudoUi.nomeLivro(json.getString("livro"))}\n${json.getString("capitulo")}"
+        status.text = intent.getStringExtra("CONTEUDO_NOME") ?: "${EstudoUi.nomeLivro(json.getString("livro"))}\n${json.getString("capitulo")}"
         val dados = json.getJSONObject("estudo")
         val resumo = dados.getJSONArray("resumo")
         lista.addView(TextView(this).apply {
-            text = "Explicação do capítulo"
+            text = "Aprender"
             textSize = 22f; typeface = Typeface.DEFAULT_BOLD
             setTextColor(UiPaleta.hex("#1A237E")); setPadding(0,dp(12),0,dp(12))
         })
@@ -331,7 +333,7 @@ class CapitulosActivity : AppCompatActivity() {
             })
         }
         lista.addView(Button(this).apply {
-            text = "Iniciar quiz — 5 questões"
+            text = "Praticar · quiz de 5 questões"
             isAllCaps = false
             backgroundTintList = android.content.res.ColorStateList.valueOf(UiPaleta.hex("#5C6BC0"))
             setTextColor(Color.WHITE)
@@ -356,6 +358,6 @@ class CapitulosActivity : AppCompatActivity() {
                     .onFailure { Toast.makeText(this@CapitulosActivity,"Nenhum navegador disponível",Toast.LENGTH_SHORT).show() }
             }
         })
-        lista.addView(Button(this).apply { text = "Escolher outro capítulo"; setOnClickListener { estudo = null; preparacao.limpar(); carregar() } })
+        lista.addView(Button(this).apply { text = "Voltar aos conteúdos"; setOnClickListener { estudo = null; preparacao.limpar(); if(intent.getIntExtra("ID_CONTEUDO",0)>0) finish() else carregar() } })
     }
 }

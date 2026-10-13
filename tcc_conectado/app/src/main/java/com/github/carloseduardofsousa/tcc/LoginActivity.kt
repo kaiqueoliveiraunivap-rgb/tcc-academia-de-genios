@@ -29,7 +29,6 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var btnPerfilAluno: Button
     private lateinit var btnPerfilProfessor: Button
-    private lateinit var cadastro: Button
     private lateinit var status: TextView
     private val perfis = listOf("aluno", "professor")
     private var perfil = "aluno"
@@ -48,7 +47,6 @@ class LoginActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBarLogin)
         btnPerfilAluno = findViewById(R.id.btnPerfilAluno)
         btnPerfilProfessor = findViewById(R.id.btnPerfilProfessor)
-        cadastro = findViewById(R.id.btnIrCadastroProfessor)
         status = findViewById(R.id.statusLogin)
         perfil = savedInstanceState?.getString("perfil")?.takeIf { it in perfis } ?: "aluno"
         btnPerfilAluno.setOnClickListener { selecionarPerfil("aluno") }
@@ -65,9 +63,6 @@ class LoginActivity : AppCompatActivity() {
             } else false
         }
 
-        findViewById<Button>(R.id.btnIrCadastroProfessor).setOnClickListener {
-            startActivity(Intent(this, CadastroProfessorActivity::class.java).putExtra("PERFIL_CADASTRO", perfil))
-        }
         findViewById<Button>(R.id.btnPainelSecretaria).setOnClickListener { PainelSecretaria.abrir(this) }
     }
 
@@ -83,8 +78,7 @@ class LoginActivity : AppCompatActivity() {
             botao.setTextColor(if (selecionado) Color.WHITE else UiPaleta.hex("#555555"))
         }
         btnEntrar.text = "Entrar como $perfil"
-        cadastro.text = "Criar conta de $perfil"
-        status.text = "Use o e-mail e a senha da sua conta de $perfil."
+        status.text = "Use o acesso de $perfil fornecido pela secretaria."
     }
 
     private fun selecionarPerfil(tipo: String) {
@@ -110,7 +104,6 @@ class LoginActivity : AppCompatActivity() {
         btnEntrar.isEnabled = false
         ViewCompat.getWindowInsetsController(etSenha)?.hide(WindowInsetsCompat.Type.ime())
         botoesPerfil().forEach { it.isEnabled = false }
-        cadastro.isEnabled = false
         status.text = "Entrando…"
         progressBar.visibility = View.VISIBLE
 
@@ -122,7 +115,6 @@ class LoginActivity : AppCompatActivity() {
                 progressBar.visibility = View.GONE
                 btnEntrar.isEnabled = true
                 botoesPerfil().forEach { it.isEnabled = true }
-                cadastro.isEnabled = true
 
                 if (resposta.corpo == null) {
                     status.text = "Não foi possível conectar à API. Execute o app pelo Android Studio para iniciar o servidor local."

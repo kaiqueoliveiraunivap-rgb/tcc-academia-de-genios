@@ -78,6 +78,17 @@ try {
             resposta(['itens'=>linhas('SELECT l.id_livro,l.titulo,l.materia,l.ativo,(SELECT COUNT(*) FROM frente_livro f WHERE f.id_livro=l.id_livro) AS frentes,(SELECT COUNT(*) FROM capitulo_livro c WHERE c.id_livro=l.id_livro AND c.revisado=1) AS capitulos FROM livro_didatico l ORDER BY l.materia,l.titulo'),'pendentes'=>$pendentes]);
         }
         if ($acao==='capitulos') resposta(['itens'=>linhas('SELECT f.titulo AS frente,c.titulo,c.revisado FROM capitulo_livro c JOIN frente_livro f ON f.id_frente=c.id_frente WHERE c.id_livro=? ORDER BY f.ordem,c.ordem',[(int)($_GET['id'] ?? 0)])]);
+        if ($acao==='conteudos') resposta([
+            'itens'=>linhas('SELECT cp.id_conteudo,cp.nome,cp.serie,cp.materia,cp.bimestre,cp.ordem,cp.ativo,
+                GROUP_CONCAT(cc.id_capitulo ORDER BY cc.ordem SEPARATOR ",") AS capitulos
+                FROM conteudo_pedagogico cp LEFT JOIN conteudo_capitulo cc ON cc.id_conteudo=cp.id_conteudo
+                GROUP BY cp.id_conteudo ORDER BY cp.serie,cp.materia,cp.bimestre,cp.ordem,cp.nome'),
+            'series'=>linhas("SELECT DISTINCT serie FROM turma WHERE serie IS NOT NULL AND TRIM(serie)<>'' ORDER BY serie"),
+            'capitulos'=>linhas('SELECT c.id_capitulo,c.titulo,c.id_livro,l.titulo AS livro,l.materia,
+                (SELECT COUNT(*) FROM conteudo_capitulo cc WHERE cc.id_capitulo=c.id_capitulo) AS associacoes
+                FROM capitulo_livro c JOIN livro_didatico l ON l.id_livro=c.id_livro
+                WHERE c.revisado=1 AND l.ativo=1 ORDER BY l.materia,l.titulo,c.ordem,c.id_capitulo')
+        ]);
         falha('Recurso não encontrado.',404);
     }
     if (!hash_equals($sessao['csrf'],(string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''))) falha('Atualize a página antes de continuar.',403);
@@ -144,6 +155,37 @@ try {
             cq('UPDATE turma SET nome_turma=?,serie=?,ano_letivo=?,id_professor=? WHERE id_turma=?',[$nome,$serie,$ano,$prof,$id]);
         } else { cq('INSERT INTO turma(nome_turma,serie,ano_letivo,id_professor) VALUES (?,?,?,?)',[$nome,$serie,$ano,$prof]); $id=(int)$conn->insert_id; }
         auditar($autor,'salvar_turma',$id); $resultado=['ok'=>true];
+    } elseif ($acao==='salvar_conteudo') {
+        $id=(int)($dados['id'] ?? 0);
+        $nome=campo($dados,'nome',180); $serie=campo($dados,'serie',80);
+        $materia=campo($dados,'materia',80); $ordem=filter_var($dados['ordem'] ?? 0,FILTER_VALIDATE_INT);
+        $bimestre=($dados['bimestre'] ?? '')==='' ? null : filter_var($dados['bimestre'],FILTER_VALIDATE_INT);
+        $ativo=($dados['ativo'] ?? true) ? 1 : 0;
+        $capitulos=$dados['capitulos'] ?? [];
+        if ($ordem===false || $ordem<0 || $ordem>10000) falha('Ordem inválida.');
+        if ($bimestre!==null && ($bimestre===false || $bimestre<1 || $bimestre>4)) falha('Bimestre inválido.');
+        if (!is_array($capitulos) || !$capitulos || count($capitulos)>50) falha('Selecione ao menos um capítulo revisado.');
+        $capitulos=array_values(array_unique(array_map(static function($v) {
+            $id=filter_var($v,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
+            if (!$id) falha('Capítulo inválido.');
+            return $id;
+        },$capitulos)));
+        if (!linhas('SELECT 1 FROM turma WHERE serie=? LIMIT 1',[$serie])) falha('Cadastre uma turma com esta série antes de publicar conteúdos.');
+        foreach ($capitulos as $idCapitulo) {
+            if (!linhas('SELECT 1 FROM capitulo_livro c JOIN livro_didatico l ON l.id_livro=c.id_livro WHERE c.id_capitulo=? AND c.revisado=1 AND l.ativo=1 AND l.materia=?',[$idCapitulo,$materia])) falha('Um capítulo não pertence à matéria ou ainda não está revisado.');
+        }
+        if ($id) {
+            $anterior=linhas('SELECT serie,materia FROM conteudo_pedagogico WHERE id_conteudo=? FOR UPDATE',[$id])[0] ?? null;
+            if (!$anterior) falha('Conteúdo não encontrado.',404);
+            if (($anterior['serie']!==$serie || $anterior['materia']!==$materia) && linhas('SELECT 1 FROM atividade_publicada WHERE id_conteudo=? LIMIT 1',[$id])) falha('Este conteúdo já possui atividades. Mantenha sua série e matéria.');
+            cq('UPDATE conteudo_pedagogico SET nome=?,serie=?,materia=?,bimestre=?,ordem=?,ativo=? WHERE id_conteudo=?',[$nome,$serie,$materia,$bimestre,$ordem,$ativo,$id]);
+            cq('DELETE FROM conteudo_capitulo WHERE id_conteudo=?',[$id]);
+        } else {
+            cq('INSERT INTO conteudo_pedagogico(nome,serie,materia,bimestre,ordem,ativo) VALUES (?,?,?,?,?,?)',[$nome,$serie,$materia,$bimestre,$ordem,$ativo]);
+            $id=(int)$conn->insert_id;
+        }
+        foreach ($capitulos as $posicao=>$idCapitulo) cq('INSERT INTO conteudo_capitulo(id_conteudo,id_capitulo,ordem) VALUES (?,?,?)',[$id,$idCapitulo,$posicao]);
+        auditar($autor,'salvar_conteudo',$id); $resultado=['ok'=>true,'id'=>$id];
     } elseif ($acao==='livro_ativo') {
         $id=(int)($dados['id'] ?? 0); $ativo=($dados['ativo'] ?? false) ? 1 : 0;
         if (!linhas('SELECT id_livro FROM livro_didatico WHERE id_livro=?',[$id])) falha('Livro não encontrado.',404);

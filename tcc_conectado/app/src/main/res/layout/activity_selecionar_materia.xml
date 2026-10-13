@@ -38,7 +38,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Escolha uma matéria para explorar seus livros e capítulos."
+                android:text="Escolha uma matéria para ver os conteúdos da sua série."
                 android:textSize="15sp"
                 android:textColor="@color/TextoSecundario"
                 android:layout_marginTop="4dp"
@@ -97,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:minHeight="52dp"
                 android:padding="12dp"
-                android:text="Iniciar Quiz"
+                android:text="Ver conteúdos"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/TextoNoPrimario"

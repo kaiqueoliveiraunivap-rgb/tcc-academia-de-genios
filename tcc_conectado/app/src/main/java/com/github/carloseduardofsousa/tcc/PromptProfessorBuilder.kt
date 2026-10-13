@@ -2,10 +2,13 @@ package com.github.carloseduardofsousa.tcc
 
 /** Prévia da orientação que será aplicada a todos os alunos da turma. */
 object PromptProfessorBuilder {
-    fun montar(nomeTurma: String, nomeProfessor: String, materia: String, instrucaoBruta: String): String =
+    fun montar(nomeTurma: String, nomeProfessor: String, materia: String, instrucaoBruta: String,
+               livro: String? = null, bimestre: Int? = null): String =
         buildString {
             appendLine("Turma: $nomeTurma")
             appendLine("Matéria: $materia")
+            if (livro != null) appendLine("Livro: $livro")
+            if (bimestre != null) appendLine("Bimestre: $bimestre")
             appendLine("Professor(a): $nomeProfessor")
             appendLine()
             appendLine(instrucaoBruta.trim())

@@ -89,6 +89,9 @@ try {
         $s=$conn->prepare('INSERT INTO instalacao_local (chave) VALUES (?)'); $s->bind_param('s',$marcador); $s->execute();
         $conn->query("DELETE FROM instalacao_local WHERE chave LIKE 'estrutura-v2-%' AND chave<>'".$conn->real_escape_string($marcador)."'");
     }
+    // Independente da assinatura legada: não força a reaplicação dos scripts
+    // antigos quando apenas a organização pedagógica evoluir.
+    require __DIR__.'/migrar_pedagogico.php';
     echo $producao
         ? "Banco de produção preparado. Contas existentes preservadas.\n"
         : "Banco preparado. Contas existentes preservadas. Acessos de teste: .runtime/acessos-locais.json\n";

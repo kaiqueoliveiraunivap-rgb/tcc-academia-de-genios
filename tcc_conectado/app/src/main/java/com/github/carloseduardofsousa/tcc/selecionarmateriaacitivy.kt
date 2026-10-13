@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 // ── Modelo ───────────────────────────────────────────────────
-data class MateriaItem(val nome: String, val sigla: String, val capitulos: Int)
+data class MateriaItem(val nome: String, val sigla: String, val capitulos: Int, val concluidos: Int)
 
 // ── Adapter do grid de matérias ──────────────────────────────
 class MateriaAdapter(
@@ -74,7 +74,7 @@ class MateriaAdapter(
             text = item.nome
             setTextColor(if (isSelected) Color.WHITE else UiPaleta.hex("#1A1A2E"))
         }
-        (textos.getChildAt(1) as TextView).apply { text = if (item.capitulos > 0) "${item.capitulos} capítulos disponíveis" else "Em preparação"; setTextColor(if (isSelected) Color.WHITE else UiPaleta.hex("#666680")) }
+        (textos.getChildAt(1) as TextView).apply { text = "${item.concluidos} de ${item.capitulos} conteúdos concluídos"; setTextColor(if (isSelected) Color.WHITE else UiPaleta.hex("#666680")) }
         h.card.background = GradientDrawable().apply {
             cornerRadius = EstudoUi.dp(h.card.context, 16).toFloat()
             setColor(if (isSelected) UiPaleta.hex("#5C6BC0") else UiPaleta.superficie())
@@ -128,8 +128,8 @@ class SelecionarMateriaActivity : AppCompatActivity() {
         rvMaterias.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
         materiaRestaurada = savedInstanceState?.getString("materia")
 
-        btnIniciar.text = "Escolher frente"
-        btnIniciar.setOnClickListener { if (falhou) carregarMaterias(rvMaterias) else abrirFrentes() }
+        btnIniciar.text = "Ver conteúdos"
+        btnIniciar.setOnClickListener { if (falhou) carregarMaterias(rvMaterias) else abrirConteudos() }
 
         carregarMaterias(rvMaterias)
     }
@@ -141,7 +141,7 @@ class SelecionarMateriaActivity : AppCompatActivity() {
         tvCarregando.apply { text = "Carregando matérias disponíveis…"; visibility = View.VISIBLE }
         lifecycleScope.launch {
             val resposta = withContext(Dispatchers.IO) {
-                ApiClient.postComStatus("listar_materias.php", mapOf("token" to Sessao.token(this@SelecionarMateriaActivity)))
+                ApiClient.postComStatus("catalogo_estudos.php", mapOf("token" to Sessao.token(this@SelecionarMateriaActivity)))
             }
             progressBar.visibility = View.GONE
             carregando = false
@@ -155,7 +155,7 @@ class SelecionarMateriaActivity : AppCompatActivity() {
             val array = json.getJSONArray("materias")
             val materias = (0 until array.length()).map { i ->
                 val nome = array.getJSONObject(i).getString("nome")
-                MateriaItem(nome, MateriaVisual.sigla(nome), array.getJSONObject(i).optInt("capitulos_disponiveis"))
+                MateriaItem(nome, MateriaVisual.sigla(nome), array.getJSONObject(i).optInt("total"), array.getJSONObject(i).optInt("concluidos"))
             }
             tvCarregando.text = if (materias.none { it.capitulos > 0 }) "Os livros estão sendo preparados. Volte em breve." else ""
             tvCarregando.visibility = if (materias.none { it.capitulos > 0 }) View.VISIBLE else View.GONE
@@ -164,7 +164,7 @@ class SelecionarMateriaActivity : AppCompatActivity() {
                 btnIniciar.isEnabled = true
                 btnIniciar.alpha = 1f
             }
-            btnIniciar.text = "Escolher frente"
+            btnIniciar.text = "Ver conteúdos"
             materias.firstOrNull { it.nome == materiaRestaurada && it.capitulos > 0 }?.let { item ->
                 materiaSelecionada = item
                 (lista.adapter as MateriaAdapter).selecionar(materias.indexOf(item))
@@ -177,9 +177,9 @@ class SelecionarMateriaActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState); outState.putString("materia", materiaSelecionada?.nome ?: materiaRestaurada)
     }
 
-    private fun abrirFrentes() {
+    private fun abrirConteudos() {
         val materia = materiaSelecionada ?: return
-        startActivity(android.content.Intent(this, FrentesActivity::class.java).apply {
+        startActivity(android.content.Intent(this, ConteudosActivity::class.java).apply {
             this@SelecionarMateriaActivity.intent.extras?.let { putExtras(it) }
             putExtra("MATERIA", materia.nome)
         })
