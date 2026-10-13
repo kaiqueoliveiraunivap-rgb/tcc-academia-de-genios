@@ -37,7 +37,8 @@ function pontuacaoDoConteudo(mysqli $conn,int $idAluno,int $idTurma,?int $idCont
 }
 
 function atualizarRankingPorMelhor(mysqli $conn,int $idAluno,int $idTurma,?int $idConteudo,int $idCapitulo,int $idQuiz): void {
-    $mes=date('Y-m');
+    // Usa o mesmo relógio do criado_em do quiz, inclusive na virada do mês.
+    $mes=(string)$conn->query("SELECT DATE_FORMAT(NOW(),'%Y-%m') AS mes")->fetch_assoc()['mes'];
     $chave=$idConteudo!==null ? 'conteudo:'.$idConteudo : 'capitulo:'.$idCapitulo;
     $novo=pontuacaoDoConteudo($conn,$idAluno,$idTurma,$idConteudo,$idCapitulo,$mes);
     $legado=pontuacaoDoConteudo($conn,$idAluno,$idTurma,$idConteudo,$idCapitulo,$mes,true,

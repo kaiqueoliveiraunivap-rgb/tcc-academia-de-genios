@@ -2,6 +2,7 @@
 // Leitura direta das páginas revisadas do livro, sem geração nem serviço externo.
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/perfis.php';
+require_once __DIR__ . '/acesso_pdf.php';
 
 $aluno = exigirUsuarioLogado($conn);
 if (normalizarPerfil($aluno['tipo_perfil']) !== 'aluno') responderErro('Leitura exclusiva de alunos.', 403);
@@ -42,7 +43,7 @@ responderJson([
     'livro' => $capitulo['livro'],
     'capitulo' => $capitulo['capitulo'],
     'materia' => $capitulo['materia'],
-    'fonte_url' => $capitulo['fonte_url'],
+    'fonte_url' => urlPdfParaAluno($conn,$capitulo['fonte_url'],(int)$aluno['id_usuario'],$_POST['token']),
     'paginas' => $paginas,
     'ia_disponivel' => configuracao('GEMINI_MODEL') !== '' && configuracao('GEMINI_API_KEY') !== '',
 ]);

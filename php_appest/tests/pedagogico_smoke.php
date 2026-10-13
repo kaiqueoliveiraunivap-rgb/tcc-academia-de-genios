@@ -9,6 +9,7 @@ require __DIR__.'/../conexao.php';
 mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);
 $base=getenv('PEDAGOGICO_TEST_URL') ?: 'http://127.0.0.1:8089/php_appest/catalogo_estudos.php';
 $pasta=substr($base,0,strrpos($base,'/')+1);
+$servidorPdf=parse_url($base,PHP_URL_SCHEME).'://'.parse_url($base,PHP_URL_HOST).':'.(parse_url($base,PHP_URL_PORT) ?: 80);
 $ids=[];
 function gravar(mysqli $conn,string $sql,array $args=[]): int {
     $s=$conn->prepare($sql);
@@ -24,6 +25,12 @@ function chamar(string $url,array $dados): array {
     if ($corpo===false) throw new RuntimeException('API de teste indisponível.');
     preg_match('/HTTP\/\S+\s+(\d+)/',$http_response_header[0] ?? '',$m);
     return [(int)($m[1] ?? 0),json_decode($corpo,true,512,JSON_THROW_ON_ERROR)];
+}
+function codigoGet(string $url): int {
+    $context=stream_context_create(['http'=>['ignore_errors'=>true,'timeout'=>8]]);
+    file_get_contents($url,false,$context);
+    preg_match('/HTTP\/\S+\s+(\d+)/',$http_response_header[0] ?? '',$m);
+    return (int)($m[1] ?? 0);
 }
 function coordenacao(string $url,string $metodo,array $dados,string $cookie,string $csrf=''): array {
     $url.=$metodo==='GET' ? '?'.http_build_query($dados) : '';
@@ -52,6 +59,15 @@ try {
     gravar($conn,'INSERT INTO matricula(id_turma,id_aluno) VALUES (?,?)',[$ids['turmaA'],$ids['alunoA']]);
     gravar($conn,'INSERT INTO matricula(id_turma,id_aluno) VALUES (?,?)',[$ids['turmaB'],$ids['alunoB']]);
     $ids['livro']=gravar($conn,'INSERT INTO livro_didatico(titulo,materia,fonte_url,versao,ativo) VALUES (?,?,?,?,1)',["Livro teste $sufixo",'Matemática','https://example.invalid/livro.pdf',hash('sha256',$sufixo)]);
+    $arquivoPdf=bin2hex(random_bytes(32));
+    $urlPdf='/php_appest/livro_pdf.php?arquivo='.$arquivoPdf;
+    gravar($conn,"INSERT INTO coordenacao_livro(arquivo,sha256,titulo,materia,id_autor,estado,id_livro) VALUES (?,?,?,?,?,'pronto',?)",
+        [$arquivoPdf,hash('sha256','pdf-'.$sufixo),'Livro de teste','Matemática',$ids['admin'],$ids['livro']]);
+    gravar($conn,'UPDATE livro_didatico SET fonte_url=? WHERE id_livro=?',[$urlPdf,$ids['livro']]);
+    $pastaPdf=dirname(__DIR__,2).'/.runtime/coordenacao';
+    if (!is_dir($pastaPdf)) mkdir($pastaPdf,0700,true);
+    $caminhoPdf=$pastaPdf.'/'.$arquivoPdf.'.pdf';
+    file_put_contents($caminhoPdf,"%PDF-1.4\n%%EOF\n");
     $ids['capitulo']=gravar($conn,'INSERT INTO capitulo_livro(id_livro,ordem,titulo,paginas_json,revisado) VALUES (?,?,?,?,1)',[$ids['livro'],1,'Funções quadráticas',json_encode([['pagina'=>1,'texto'=>'Exemplo de função quadrática.']])]);
     $coordToken=bin2hex(random_bytes(32)); $csrf=bin2hex(random_bytes(32));
     gravar($conn,'INSERT INTO coordenacao_sessao(token_hash,id_usuario,csrf,expira_em,ultimo_acesso) VALUES (?,?,?,DATE_ADD(NOW(),INTERVAL 1 HOUR),NOW())',
@@ -99,6 +115,12 @@ try {
     [$codigo]=chamar($base,['token'=>'invalido']); confirmar($codigo===401,'Token inválido não foi recusado.');
     [$codigo]=chamar($pasta.'ler_capitulo.php',['token'=>$tokenB,'id_capitulo'=>$ids['capitulo']]);
     confirmar($codigo===403,'Leitura de capítulo de outra série não foi bloqueada.');
+    confirmar(codigoGet($servidorPdf.$urlPdf)===403,'PDF privado aceitou URL sem autorização.');
+    [$codigo,$leitura]=chamar($pasta.'ler_capitulo.php',['token'=>$tokenA,'id_capitulo'=>$ids['capitulo']]);
+    confirmar($codigo===200 && codigoGet($servidorPdf.$leitura['fonte_url'])===200,
+        'Aluno autorizado não abriu o PDF temporário.');
+    confirmar(codigoGet($servidorPdf.$leitura['fonte_url'].'x')===403,
+        'PDF aceitou assinatura alterada.');
     [$codigo]=chamar($pasta.'gerar_estudo.php',['token'=>$tokenB,'id_capitulo'=>$ids['capitulo'],'id_turma'=>$ids['turmaB']]);
     confirmar($codigo===403,'Geração de capítulo de outra série não foi bloqueada.');
     [$codigo,$a]=chamar($base,['token'=>$tokenA]);
@@ -187,7 +209,9 @@ try {
     if (isset($ids['conteudo'])) { gravar($conn,'DELETE FROM conteudo_capitulo WHERE id_conteudo=?',[$ids['conteudo']]); gravar($conn,'DELETE FROM conteudo_pedagogico WHERE id_conteudo=?',[$ids['conteudo']]); }
     if (isset($ids['capitulo'])) gravar($conn,'DELETE FROM capitulo_livro WHERE id_capitulo=?',[$ids['capitulo']]);
     if (isset($ids['capitulo2'])) gravar($conn,'DELETE FROM capitulo_livro WHERE id_capitulo=?',[$ids['capitulo2']]);
+    if (isset($arquivoPdf)) gravar($conn,'DELETE FROM coordenacao_livro WHERE arquivo=?',[$arquivoPdf]);
     if (isset($ids['livro'])) gravar($conn,'DELETE FROM livro_didatico WHERE id_livro=?',[$ids['livro']]);
+    if (isset($caminhoPdf) && is_file($caminhoPdf)) unlink($caminhoPdf);
     foreach (['alunoA','alunoB'] as $aluno) if (isset($ids[$aluno])) { gravar($conn,'DELETE FROM sessao WHERE id_usuario=?',[$ids[$aluno]]); gravar($conn,'DELETE FROM matricula WHERE id_aluno=?',[$ids[$aluno]]); }
     if (isset($ids['prof'])) gravar($conn,'DELETE FROM sessao WHERE id_usuario=?',[$ids['prof']]);
     if (isset($ids['admin'])) {

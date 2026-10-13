@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/estudo_formato.php';
 require_once __DIR__ . '/orientacao_turma.php';
 require_once __DIR__ . '/perfis.php';
+require_once __DIR__ . '/acesso_pdf.php';
 $aluno=exigirUsuarioLogado($conn);
 if (normalizarPerfil($aluno['tipo_perfil'])!=='aluno') responderErro('Estudo exclusivo de alunos.',403);
 set_time_limit(210);
@@ -155,7 +156,7 @@ try {
     }
     validarEstudoCompleto($dados,$paginas);
     if ($origemGeracao==='cache') registrarMetricasGeracaoEstudo(['origem'=>'cache','duracao_ms'=>(int)((microtime(true)-$inicioRequisicao)*1000),'modelo'=>$model]);
-    $resposta=['status'=>'sucesso','id_estudo'=>$idEstudo,'id_turma'=>$idTurma,'dificuldade'=>$nivel,'estudo'=>$dados,'livro'=>$cap['livro'],'capitulo'=>$cap['titulo'],'fonte_url'=>$cap['fonte_url'],
+    $resposta=['status'=>'sucesso','id_estudo'=>$idEstudo,'id_turma'=>$idTurma,'dificuldade'=>$nivel,'estudo'=>$dados,'livro'=>$cap['livro'],'capitulo'=>$cap['titulo'],'fonte_url'=>urlPdfParaAluno($conn,$cap['fonte_url'],(int)$aluno['id_usuario'],$_POST['token']),
         'bimestre'=>$orientacao['bimestre'] ?? null,'orientacao_professor'=>$orientacao ? ['professor'=>$orientacao['nome_professor'],'instrucao'=>$orientacao['instrucao']] : null];
 } catch (Throwable $e) {
     error_log('Falha estudo: '.get_class($e).' — '.$e->getMessage());

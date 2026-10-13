@@ -5,7 +5,8 @@ function turmaDoEstudo($conn, int $idAluno, ?int $idTurma): ?int {
         exigirAlunoNaTurma($conn,$idAluno,$idTurma);
         return $idTurma;
     }
-    $s=$conn->prepare('SELECT MIN(id_turma) AS id_turma FROM matricula WHERE id_aluno=?');
+    $s=$conn->prepare('SELECT t.id_turma FROM matricula m JOIN turma t ON t.id_turma=m.id_turma
+        WHERE m.id_aluno=? ORDER BY t.ano_letivo DESC,t.id_turma DESC LIMIT 1');
     $s->bind_param('i',$idAluno); $s->execute();
     $id=$s->get_result()->fetch_assoc()['id_turma'];
     return $id === null ? null : (int)$id;

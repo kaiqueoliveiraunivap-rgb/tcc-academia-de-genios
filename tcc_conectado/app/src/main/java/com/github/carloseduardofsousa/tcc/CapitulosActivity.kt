@@ -259,7 +259,8 @@ class CapitulosActivity : AppCompatActivity() {
         }
         lista.addView(EstudoUi.botao(this,"Abrir PDF original") {
             runCatching {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(json.getString("fonte_url"))))
+                val fonte=java.net.URL(java.net.URL(ApiConfig.BASE_URL),json.getString("fonte_url")).toString()
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fonte)))
             }.onFailure { Toast.makeText(this,"Nenhum navegador disponível",Toast.LENGTH_SHORT).show() }
         })
         adicionarProximaParte(json.getInt("id_capitulo"))
