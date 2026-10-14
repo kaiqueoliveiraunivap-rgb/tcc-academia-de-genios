@@ -1,6 +1,8 @@
 package com.github.carloseduardofsousa.tcc
 
+import android.content.res.ColorStateList
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.InputFilter
 import android.text.InputType
@@ -75,12 +77,25 @@ class ProfessorConteudoDetalheActivity : AppCompatActivity() {
             setTextColor(getColor(R.color.TextoPrincipal))
             setHintTextColor(getColor(R.color.TextoSecundario))
             setPadding(dp(15),dp(12),dp(15),dp(12))
-            setBackgroundColor(UiPaleta.superficie())
+            background=GradientDrawable().apply {
+                setColor(UiPaleta.superficie()); cornerRadius=dp(14).toFloat()
+                setStroke(dp(1),getColor(R.color.BordaCard))
+            }
         }
         conteudo.addView(orientacao,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(9); bottomMargin=dp(10) })
-        salvar=Button(this).apply { text="Salvar orientação"; isAllCaps=false; setOnClickListener { salvarOrientacao() } }
+        salvar=Button(this).apply {
+            text="Salvar orientação"; isAllCaps=false
+            setTextColor(getColor(R.color.TextoNoPrimario))
+            backgroundTintList=ColorStateList.valueOf(getColor(R.color.Destaque))
+            setOnClickListener { salvarOrientacao() }
+        }
         conteudo.addView(salvar,LinearLayout.LayoutParams(-1,dp(52)))
-        publicar=Button(this).apply { text="Publicar atividade para a turma"; isAllCaps=false; setOnClickListener { dialogoPublicar() } }
+        publicar=Button(this).apply {
+            text="Publicar atividade para a turma"; isAllCaps=false
+            setTextColor(getColor(R.color.Destaque))
+            backgroundTintList=ColorStateList.valueOf(getColor(R.color.DestaqueSuave))
+            setOnClickListener { dialogoPublicar() }
+        }
         conteudo.addView(publicar,LinearLayout.LayoutParams(-1,dp(52)).apply { topMargin=dp(10) })
         conteudo.addView(titulo("Desempenho de aprendizagem"))
         desempenho=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
@@ -148,6 +163,8 @@ class ProfessorConteudoDetalheActivity : AppCompatActivity() {
                 val assunto=dificuldades.getJSONObject(0).optString("assunto")
                 desempenho.addView(Button(this@ProfessorConteudoDetalheActivity).apply {
                     text="Preparar reforço"; isAllCaps=false
+                    setTextColor(getColor(R.color.Destaque))
+                    backgroundTintList=ColorStateList.valueOf(getColor(R.color.DestaqueSuave))
                     setOnClickListener {
                         orientacao.setText("Retome $assunto com exemplos resolvidos e exercícios graduais. Destaque os erros mais comuns antes do quiz.")
                         orientacao.requestFocus()

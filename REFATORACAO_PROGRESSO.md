@@ -34,6 +34,7 @@ Branch local: `refatoracao-tcc`. Não houve push. Não executar exclusões em ba
 - `pedagogico_smoke.php` passou novamente no banco isolado do D após a correção de collation. O teste agora usa séries exclusivas para conviver com o fixture do emulador.
 - `:app:assembleDebug :app:assembleRelease --offline` e recompilação final de `assembleDebug` passaram; APK debug reinstalado no `TCC_API36_TESTE`. PHP lint dos arquivos alterados, `node --check` e `git diff --check` passaram.
 - Componentes compartilhados de histórico/revisão agora usam recursos de cor do tema. Histórico conferido visualmente em claro e escuro no emulador; modo escuro restaurado e dashboard deixado aberto.
+- Tela de conteúdo do professor recebeu campo de orientação contornado e ações com hierarquia visual consistente; tema escuro conferido no `TCC_API36_TESTE` após carregamento dos dados reais.
 
 ## Próximo trabalho
 
