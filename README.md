@@ -1,8 +1,10 @@
 # Academia de Gênios
 
-Aplicativo Android e site da secretaria com API PHP/MySQL para estudo por capítulos de livros didáticos. O aluno escolhe matéria, frente e capítulo, lê uma explicação detalhada com subtítulos e responde a um quiz. Seus resultados alimentam o histórico, o ranking e os gráficos. O professor acompanha as turmas por série e pode orientar o resumo e o quiz por matéria, livro e bimestre.
+Aplicativo Android e site da secretaria com API PHP/MySQL para estudos organizados por série, matéria, bimestre e conteúdo. Os capítulos dos livros permanecem como fontes internas, sem exigir que o aluno navegue por termos técnicos. O estudante aprende, pratica com quizzes, acompanha seu progresso e realiza atividades publicadas pelos professores. Seus resultados alimentam o histórico, o ranking e os relatórios de aprendizagem.
 
 O aplicativo Android atende alunos e professores. A secretaria usa um site separado, conectado à mesma API e ao mesmo banco, para cadastrar usuários, organizar turmas e publicar livros. Alunos e professores recebem suas contas da secretaria; não há autocadastro no app.
+
+O professor acessa apenas suas turmas e pode preparar orientações por conteúdo, publicar atividades e identificar dificuldades pelas respostas reais dos quizzes. Notas escolares permanecem separadas do desempenho de aprendizagem.
 
 ## Executar no emulador
 

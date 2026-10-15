@@ -1,0 +1,49 @@
+name: Validacao
+
+on:
+  push:
+    branches: [main, refatoracao-tcc]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mysqli, mbstring, curl
+          coverage: none
+      - name: Verificar sintaxe
+        shell: bash
+        run: find php_appest -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Testar formato e validacao dos estudos
+        run: |
+          php php_appest/tests/estudo_formato_test.php
+          php php_appest/tests/estudo_validacao_test.php
+
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tcc_conectado
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+      - name: Instalar SDK Android
+        run: sdkmanager "platforms;android-36.1" "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Testes unitarios e compilacao debug
+        run: ./gradlew testDebugUnitTest assembleDebug --no-daemon --stacktrace

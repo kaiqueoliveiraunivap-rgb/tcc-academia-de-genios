@@ -1,6 +1,6 @@
 # Refatoração do TCC — checkpoint
 
-Branch local: `refatoracao-tcc`. Não houve push. Não executar exclusões em banco real.
+Branch de trabalho: `refatoracao-tcc`, publicada no GitHub. Não executar exclusões em banco real.
 
 ## Integrado
 
@@ -35,6 +35,9 @@ Branch local: `refatoracao-tcc`. Não houve push. Não executar exclusões em ba
 - `:app:assembleDebug :app:assembleRelease --offline` e recompilação final de `assembleDebug` passaram; APK debug reinstalado no `TCC_API36_TESTE`. PHP lint dos arquivos alterados, `node --check` e `git diff --check` passaram.
 - Componentes compartilhados de histórico/revisão agora usam recursos de cor do tema. Histórico conferido visualmente em claro e escuro no emulador; modo escuro restaurado e dashboard deixado aberto.
 - Tela de conteúdo do professor recebeu campo de orientação contornado e ações com hierarquia visual consistente; tema escuro conferido no `TCC_API36_TESTE` após carregamento dos dados reais.
+- Testes unitários Android agora cobrem médias ponderadas, ausência de notas, ordenação, filtros, formatação, matérias e escopo das orientações do professor; `testDebugUnitTest assembleDebug` passou.
+- Tela legada de desempenho da turma passou a usar cores do tema, requisição vinculada ao ciclo de vida e estados vazios/erro recuperáveis.
+- Workflow do GitHub valida sintaxe e testes PHP, testes unitários Android e compilação debug em pushes e pull requests.
 
 ## Próximo trabalho
 
@@ -43,3 +46,4 @@ Branch local: `refatoracao-tcc`. Não houve push. Não executar exclusões em ba
 - A API PHP embutida de desenvolvimento atende uma requisição por vez: as fases persistem no banco, mas o polling do app pode só receber a fase final. Validar feedback intermediário também sob servidor com múltiplos workers.
 - Ampliar testes Android e navegação autenticada de aluno/professor/secretaria; a conclusão da atividade foi testada no aluno, mas falta revisão visual abrangente das telas legadas.
 - Revisar desempenho do ranking mensal com volume de dados maior e paginar se necessário.
+- Publicar a API exige uma conta de hospedagem e um domínio HTTPS externos. O projeto já contém `Dockerfile`, `railway.json`, endpoint de saúde e instruções em `HOSPEDAGEM.md`; nenhuma credencial de produção é armazenada no repositório.
